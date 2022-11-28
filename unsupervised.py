@@ -2,8 +2,6 @@ import os
 import torch
 import ipdb
 import City_imageloader
-import loader
-import models
 import builder
 import torchvision.transforms as transforms
 import random
@@ -80,6 +78,7 @@ def main():
     img_path = '/media/jean-marie/WD_BLACK/Datasets/'
     numEpochs = 10
     learningRate = 0.0001
+    numImgs = 50
     batchsize = 4
     model_name = 'model_DetCo_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
     out_dir = './results/' + model_name
@@ -96,7 +95,7 @@ def main():
 
     min_trainLoss = np.inf
 
-    model = builder.DetCo(models.__dict__['resnet34'],128, 65536, 0.999, 0.07)
+    model = builder.DetCo(16)
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     augmentation = [
@@ -108,7 +107,7 @@ def main():
             #normalize
         ]
     #checkpoint = torch.load('./checkpoint_0150.pth.tar')
-    Citydataset = City_imageloader.CityscapeDataset(img_path, 'val',loader.TwoCropsTransform(transforms.Compose(augmentation)))
+    Citydataset = City_imageloader.CityscapeDataset(img_path, 'val',City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
     #model.load_state_dict(checkpoint['state_dict'])
 
     # #########################################
