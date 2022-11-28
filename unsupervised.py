@@ -158,9 +158,9 @@ def main():
             q_jig = _jigsaw_backwards(q_jig,view_1_perm)
             k_jig = _jigsaw_backwards(k_jig,view_2_perm)
 
-            batch_loss_g2g = loss(q,k)
-            batch_loss_l2l = loss(q_jig,k_jig)
-            batch_loss_g2l = loss(q_jig,k)
+            batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k)
+            batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig)
+            batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k)
             batch_loss = batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
 
             optimizer.zero_grad()
@@ -174,6 +174,7 @@ def main():
         scheduler.step()  
         losses /= idx+1
         writer.add_scalars('Loss',  {'batch loss':losses[0],'global loss':losses[1],'local loss':losses[2] ,'global2local loss':losses[3]}, epoch)
+        writer.add_scalars('similarity',  {'pos_g2g':pos_g2g,'pos_l2l':pos_l2l,'pos_g2l':pos_g2l ,'neg_g2g':neg_g2g,'neg_l2l':neg_l2l,'neg_g2l':neg_g2l }, epoch)
 
                 # update the learning rate
         if epoch % 15 == 0:

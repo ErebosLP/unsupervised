@@ -52,9 +52,9 @@ class ContrastiveLoss(torch.nn.Module):
                 sim = torch.nn.CosineSimilarity(dim=1, eps=1e-08)(patch_stack,neg_patch_stack)
                 sim = (sim + 1)/2 # normalized to [0,1]
                 sim = torch.sum(sim,dim = 0)/neg_examples
-                sim = sim / self.temperature
+                #sim = sim / self.temperature
                 
                 target = torch.zeros_like(sim).cuda()
                 target[0] = 1
                 loss += self.loss(sim,target)
-        return loss/(i+1)
+        return loss/(i+1), sim[0].detach().cpu().numpy(), sim[1:].detach().cpu().numpy().sum()/neg_examples
