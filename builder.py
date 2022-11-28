@@ -7,23 +7,12 @@ from einops import rearrange
 
 
 class DetCo(nn.Module):
-    """
-    DetCo: Unsupervised Contrastive Learning for Object Detection
-    https://arxiv.org/pdf/2102.04803.pdf
-    """
+
     def __init__(self,encoder, channels =16):
-        """
-        dim: feature dimension (default: 128)
-        K: queue size; number of negative keys (default: 65536)
-        m: moco momentum of updating key encoder (default: 0.999)
-        T: softmax temperature (default: 0.07)
-        """
         super().__init__()
 
         self.m = 0.999
       
-        
-        # num_classes is the output fc dimension
         self.encoder_q =  smp.Unet(encoder_name=encoder, encoder_weights=None, classes=channels, activation='sigmoid') 
         self.encoder_k =  smp.Unet(encoder_name=encoder, encoder_weights=None, classes=channels, activation='sigmoid') 
 
