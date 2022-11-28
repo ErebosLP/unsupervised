@@ -74,16 +74,22 @@ def _jigsaw_backwards(x, permutation):
 
 #####################################
 def main():
-    #Hyperparameter
-    img_path = '/media/jean-marie/WD_BLACK/Datasets/'
+    #Hyperparameter    
     numEpochs = 10
     learningRate = 0.0001
+    
     numImgs = 50
     batchsize = 4
-    model_name = 'model_DetCo_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
+    numClasses = 16
+    print_freq = int(10)
+    encoder = 'resnet34'
+    
+    img_path = '/media/jean-marie/WD_BLACK/Datasets/'
+    model_name = 'model_DetCo_' + encoder + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
     out_dir = './results/' + model_name
     start_saving =  numEpochs/2 #when to start saving the max_valid_model
-    print_freq = int(10)
+
+    
 
     if not os.path.exists(os.path.join(out_dir,'model/checkpoint')):
         os.makedirs(os.path.join(out_dir,'model/checkpoint'))
@@ -95,7 +101,7 @@ def main():
 
     min_trainLoss = np.inf
 
-    model = builder.DetCo(16)
+    model = builder.DetCo(encoder,numClasses)
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     augmentation = [

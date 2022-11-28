@@ -11,7 +11,7 @@ class DetCo(nn.Module):
     DetCo: Unsupervised Contrastive Learning for Object Detection
     https://arxiv.org/pdf/2102.04803.pdf
     """
-    def __init__(self, channels =16):
+    def __init__(self,encoder, channels =16):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -24,8 +24,8 @@ class DetCo(nn.Module):
       
         
         # num_classes is the output fc dimension
-        self.encoder_q =  smp.Unet(encoder_name='resnet34', encoder_weights=None, classes=channels, activation='sigmoid') 
-        self.encoder_k =  smp.Unet(encoder_name='resnet34', encoder_weights=None, classes=channels, activation='sigmoid') 
+        self.encoder_q =  smp.Unet(encoder_name=encoder, encoder_weights=None, classes=channels, activation='sigmoid') 
+        self.encoder_k =  smp.Unet(encoder_name=encoder, encoder_weights=None, classes=channels, activation='sigmoid') 
 
         for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
             param_k.data.copy_(param_q.data)  # initialize

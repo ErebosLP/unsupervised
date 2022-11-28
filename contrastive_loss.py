@@ -39,10 +39,9 @@ class ContrastiveLoss(torch.nn.Module):
             for idx , patch in enumerate(z_list_1):
                 patch_neg_idx = self.num_regions - 1 - idx
                 
-
-                patch = torch.reshape(patch,(neg_examples,16)).unsqueeze(2)
-                patch_pos = torch.reshape(z_list_2[idx],(neg_examples,16)).unsqueeze(2)
-                patch_neg = torch.swapaxes(torch.reshape(z_list_2[patch_neg_idx],(neg_examples,16)).unsqueeze(2),0,2)
+                patch = torch.reshape(patch,(neg_examples,views_1.shape[1])).unsqueeze(2)
+                patch_pos = torch.reshape(z_list_2[idx],(neg_examples,views_1.shape[1])).unsqueeze(2)
+                patch_neg = torch.swapaxes(torch.reshape(z_list_2[patch_neg_idx],(neg_examples,views_1.shape[1])).unsqueeze(2),0,2)
                 
                 # neg_idx = np.random.choice(sample_size**2,(sample_size**2,neg_examples))
                 
