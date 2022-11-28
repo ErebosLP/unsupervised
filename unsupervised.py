@@ -5,6 +5,7 @@ import City_imageloader
 import builder
 import torchvision.transforms as transforms
 import random
+import time
 import numpy as np
 import contrastive_loss
 from torch.utils.tensorboard import SummaryWriter
@@ -77,7 +78,7 @@ def main():
     #Hyperparameter    
     numEpochs = 10
     learningRate = 0.0001
-    
+
     numImgs = 50
     batchsize = 4
     numClasses = 16
@@ -87,6 +88,7 @@ def main():
     img_path = '/media/jean-marie/WD_BLACK/Datasets/'
     model_name = 'model_DetCo_' + encoder + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
     out_dir = './results/' + model_name
+    
     start_saving =  numEpochs/2 #when to start saving the max_valid_model
 
     
@@ -141,7 +143,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, numEpochs)
 
     loss = contrastive_loss.ContrastiveLoss()
-    
+    t1 = time.time()
     for epoch in range(numEpochs):
         torch.cuda.empty_cache()
         model.train()
@@ -200,7 +202,9 @@ def main():
                     'optimizer_state_dict': optimizer.state_dict(),
                     # 'loss': loss
                     }, os.path.join(out_dir,'model/'+ 'max_valid_model.pth'))
-
+        time_estimate = (time.time() - t1) / (epoch + 1) * (numEpochs - (epoch + 1))
+        
+        print(f'Estimated time until finished: Days: {int(time_estimate/(24*3600)) }, Hours: {int(time_estimate/3600) % 24}, Minutes: {int(time_estimate/60) % 60}, Seconds: {int(time_estimate % 60)}')
     torch.save(model.state_dict(), os.path.join(out_dir,'model/'+ model_name + '.pth'))
 
 
