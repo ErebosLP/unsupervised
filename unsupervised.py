@@ -10,83 +10,21 @@ import numpy as np
 import contrastive_loss
 from torch.utils.tensorboard import SummaryWriter
 import utils
-#####################################
-# Functions for jigsaw transformation
-def _random_crop(x, ch=64, cw=64):
-    #import random
-    _, _, h, w = x.size()
-    assert h >= ch and w >= cw, f'crop error: {h} or {w} is not larger than {ch} or {cw}'
+import augmentation as aug
 
-    i = random.randint(0, h - ch)
-    j = random.randint(0, w - cw)
-
-    return x[:, :, i:i+ch, j:j+cw]
-
-
-def _jigsaw( x, nh=4, nw=4): #Use 2^x as #patches per row or implement for decimal numbers of pixels
-    #import random
-    _, _, h, w = x.size()
-    assert h % nh == 0 and w % nw == 0, f'jigsaw error: {h} or {w} is not divisible by {nh} or {nw}'
-
-    x_list = []
-    for i in range(nh):
-        for j in range(nw):
-            h0,h1,w0,w1 = i/nh*h, (i+1)/nh*h, j/nw*w, (j+1)/nw*w
-            patch = x[:, :, int(h0):int(h1), int(w0):int(w1)]
-            x_list += [patch]
-    permutation = torch.randperm(nh*nw)
-    permutation = torch.reshape(permutation,(nh,nw))
-    new_img = torch.zeros_like(x)
-    
-    for i in range(nh):
-        for j in range(nw):
-            h0,h1,w0,w1 = i/nh*h, (i+1)/nh*h, j/nw*w, (j+1)/nw*w
-            new_img[:, :, int(h0):int(h1), int(w0):int(w1)] = x_list[permutation[i,j]]
-
-    return new_img, permutation
-
-def _jigsaw_backwards(x, permutation):
-    import ipdb
-    
-    nh,nw = permutation.size()
-    _, _, h, w = x.size()
-    assert h % nh == 0 and w % nw == 0, f'jigsaw error: {h} or {w} is not divisible by {nh} or {nw}'
-
-    x_list = []
-    for i in range(nh):
-        for j in range(nw):
-            h0,h1,w0,w1 = i/nh*h, (i+1)/nh*h, j/nw*w, (j+1)/nw*w
-            patch = x[:, :, int(h0):int(h1), int(w0):int(w1)]
-            x_list += [patch]
-    new_img = torch.zeros_like(x)
-    permutation = torch.reshape(permutation,(nh*nw,))
-    for i in range(nh):
-        for j in range(nw):
-            index = i*nh+j
-            patch_idx = permutation[index]
-            #j = patch_idx % nh
-            #i = int(patch_idx/nw)
-
-            h0,h1,w0,w1 = int(patch_idx/nw)/nh*h, (int(patch_idx/nw)+1)/nh*h, (patch_idx % nh)/nw*w, ((patch_idx % nh)+1)/nw*w
-            
-            new_img[:, :, int(h0):int(h1), int(w0):int(w1)] = x_list[index] 
-    return new_img
-
-
-#####################################
 def main():
     #Hyperparameter    
-    numEpochs = 10
+    numEpochs = 100
     learningRate = 0.0001
 
-    numImgs = 50
-    batchsize = 4
+    numImgs = 3000
+    batchsize = 50
     numClasses = 16
-    print_freq = int(10)
-    encoder = 'resnet34'
+    print_freq = int(50)
+    encoder = 'resnet50'
     
-    img_path = '/media/jean-marie/WD_BLACK/Datasets/'
     model_name = 'model_DetCo_' + encoder + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
+    img_path = '/media/jean-marie/WD_BLACK/Datasets/'
     out_dir = './results/' + model_name
     
     start_saving =  numEpochs/2 #when to start saving the max_valid_model
@@ -106,16 +44,19 @@ def main():
     model = builder.DetCo(encoder,numClasses)
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
-    augmentation = [
+    augaugmentation = [
             #transforms.RandomResizedCrop(256, scale=(0.6, 1.)),
             transforms.RandomGrayscale(p=0.2),
             transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-            transforms.RandomHorizontalFlip(),
+            #transforms.RandomHorizontalFlip(),
+            aug.GaussianBlur(1,np.random.uniform(0.1,2)),
+            transforms.RandomApply([aug.Sobel()],p=1),
             transforms.ToTensor(),
             #normalize
         ]
     #checkpoint = torch.load('./checkpoint_0150.pth.tar')
     Citydataset = City_imageloader.CityscapeDataset(img_path, 'val',City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
+    numImgs = Citydataset.__len__()
     #model.load_state_dict(checkpoint['state_dict'])
 
     # #########################################
@@ -159,11 +100,11 @@ def main():
             
             q,k = model(im_q=view_1, im_k=view_2)
             
-            view_1_jig ,view_1_perm = _jigsaw(view_1)
-            view_2_jig ,view_2_perm = _jigsaw(view_2)
+            view_1_jig ,view_1_perm = aug._jigsaw(view_1)
+            view_2_jig ,view_2_perm = aug._jigsaw(view_2)
             q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
-            q_jig = _jigsaw_backwards(q_jig,view_1_perm)
-            k_jig = _jigsaw_backwards(k_jig,view_2_perm)
+            q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
+            k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
 
             batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k)
             batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig)
