@@ -18,9 +18,9 @@ def main():
     learningRate = 0.0001
 
     numImgs = 3000
-    numPatches = 16
-    batchsize = 10
-    numClasses = 16
+    numPatches = 1024
+    batchsize = 4
+    numClasses = 10
     temperature = 2
     print_freq = int(50)
     encoder = 'resnet50'
@@ -111,6 +111,11 @@ def main():
             batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k)
             batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig)
             batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k)
+            
+            batch_loss_g2g /= batchsize
+            batch_loss_l2l /= batchsize
+            batch_loss_g2l /= batchsize
+
             batch_loss = batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
 
             optimizer.zero_grad()

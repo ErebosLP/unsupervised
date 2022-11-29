@@ -56,6 +56,5 @@ class ContrastiveLoss(torch.nn.Module):
                 
                 target = torch.zeros_like(sim).cuda()
                 target[0] = 1
-                ipdb.set_trace()
                 loss += self.loss(sim,target)
         return loss/(i+1), sim[0].detach().cpu().numpy(), sim[1:].detach().cpu().numpy().sum()/neg_examples
