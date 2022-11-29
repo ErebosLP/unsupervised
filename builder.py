@@ -40,7 +40,8 @@ class DetCo(nn.Module):
         batch_size = im_q.size(0)
         
         # compute query features
-        q = self.encoder_q(im_q)  # queries: NxC
+        
+        q = self.encoder_q(im_q.type(torch.float))  # queries: NxC
         
         q = nn.functional.normalize(q, dim=1)
 
@@ -48,6 +49,6 @@ class DetCo(nn.Module):
         with torch.no_grad():  # no gradient to keys
             self._momentum_update_key_encoder()  # update the key encoder
 
-            k = self.encoder_k(im_k)  # keys: NxC
+            k = self.encoder_k(im_k.type(torch.float))  # keys: NxC
             k = nn.functional.normalize(k, dim=1)
         return q,k

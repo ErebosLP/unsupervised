@@ -23,7 +23,7 @@ class CityscapeDataset(object):
         
         self.subset = subset
         self.root = root
-        self.img_paths = glob.glob(root + 'leftImg8bit/' + subset + '/*/*_leftImg8bit.png')
+        self.img_paths = glob.glob(root + subset + '/*/*_leftImg8bit.png')
         self.img_paths.sort()
         print('num_images: ',len(self.img_paths))
         self.transform = transform

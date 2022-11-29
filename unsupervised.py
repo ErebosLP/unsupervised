@@ -18,13 +18,15 @@ def main():
     learningRate = 0.0001
 
     numImgs = 3000
-    batchsize = 50
+    numPatches = 16
+    batchsize = 10
     numClasses = 16
+    temperature = 2
     print_freq = int(50)
     encoder = 'resnet50'
     
     model_name = 'model_DetCo_' + encoder + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
-    img_path = '/media/jean-marie/WD_BLACK/Datasets/'
+    img_path = '/automount_home_students/jhembach/dataset/'
     out_dir = './results/' + model_name
     
     start_saving =  numEpochs/2 #when to start saving the max_valid_model
@@ -44,7 +46,7 @@ def main():
     model = builder.DetCo(encoder,numClasses)
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
-    augaugmentation = [
+    augmentation = [
             #transforms.RandomResizedCrop(256, scale=(0.6, 1.)),
             transforms.RandomGrayscale(p=0.2),
             transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
@@ -55,7 +57,7 @@ def main():
             #normalize
         ]
     #checkpoint = torch.load('./checkpoint_0150.pth.tar')
-    Citydataset = City_imageloader.CityscapeDataset(img_path, 'val',City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
+    Citydataset = City_imageloader.CityscapeDataset(img_path, 'train',City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
     numImgs = Citydataset.__len__()
     #model.load_state_dict(checkpoint['state_dict'])
 
@@ -83,7 +85,7 @@ def main():
     optimizer = torch.optim.Adam(params, lr=learningRate, weight_decay=0.0005)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, numEpochs)
 
-    loss = contrastive_loss.ContrastiveLoss()
+    loss = contrastive_loss.ContrastiveLoss(numPatches, temperature)
     t1 = time.time()
     for epoch in range(numEpochs):
         torch.cuda.empty_cache()
