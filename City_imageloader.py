@@ -19,11 +19,10 @@ class CityscapeDataset(object):
     load_mask()
     '''
 
-    def __init__(self,root ,  subset,transform,num_imgs = np.inf):
+    def __init__(self,root ,transform,num_imgs = np.inf):
         
-        self.subset = subset
         self.root = root
-        self.img_paths = glob.glob(root + subset + '/*/*_leftImg8bit.png')
+        self.img_paths = glob.glob(root + '/*.jpg')
         self.img_paths.sort()
         print('num_images: ',len(self.img_paths))
         self.transform = transform
@@ -36,6 +35,7 @@ class CityscapeDataset(object):
        return self.length
    
     def __getitem__(self, index):
+        index *= 3
         img = Image.open(self.img_paths[index])
         img = T.Resize((256,256))(img) 
 
