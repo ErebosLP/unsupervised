@@ -17,17 +17,17 @@ def main():
     numEpochs = 100
     learningRate = 0.0001
 
-    numImgs = 3000
-    numPatches = 1024
+    numImgs = 50000
+    numPatches = 256
     batchsize = 4
     numClasses = 10
     temperature = 2
-    print_freq = int(50)
+    print_freq = int(1000)
     encoder = 'resnet50'
     
     model_name = 'model_DetCo_' + encoder + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
-    img_path = '/automount_home_students/jhembach/dataset/'
-    out_dir = './results/' + model_name
+    img_path = '/cache/jhembach/dataset/'
+    out_dir = '/cache/results/' + model_name
     
     start_saving =  numEpochs/2 #when to start saving the max_valid_model
 
@@ -45,21 +45,15 @@ def main():
 
     model = builder.DetCo(encoder,numClasses)
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     augmentation = [
-            #transforms.RandomResizedCrop(256, scale=(0.6, 1.)),
             transforms.RandomGrayscale(p=0.2),
             transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-            #transforms.RandomHorizontalFlip(),
             aug.GaussianBlur(1,np.random.uniform(0.1,2)),
             transforms.RandomApply([aug.Sobel()],p=1),
             transforms.ToTensor(),
-            #normalize
         ]
-    #checkpoint = torch.load('./checkpoint_0150.pth.tar')
-    Citydataset = City_imageloader.CityscapeDataset(img_path, 'train',City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
+    Citydataset = City_imageloader.CityscapeDataset(img_path,City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
     numImgs = Citydataset.__len__()
-    #model.load_state_dict(checkpoint['state_dict'])
 
     # #########################################
     # import matplotlib.pyplot as plt
