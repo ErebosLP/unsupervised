@@ -47,9 +47,9 @@ def main():
 
     augmentation = [
             transforms.RandomGrayscale(p=0.2),
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
+            transforms.ColorJitter(0.8, 0.8, 0.8, 0.2),
             aug.GaussianBlur(1,np.random.uniform(0.1,2)),
-            transforms.RandomApply([aug.Sobel()],p=1),
+            transforms.RandomApply([aug.Sobel()],p=0.5),
             transforms.ToTensor(),
         ]
     Citydataset = City_imageloader.CityscapeDataset(img_path,City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
