@@ -12,6 +12,7 @@ class ContrastiveLoss(torch.nn.Module):
    
     def forward(self, views_1, views_2):#shape [1,16,256,256] -> 16,65536
         loss = 0
+        sim_all = np.zeros((int((view_1.size()[2] * view_1.size()[3])/self.num_regions) + 1,1))
         for i in range(views_1.shape[0]):
             z_view1 = views_1[i].unsqueeze(0)
             z_view2 = views_2[i].unsqueeze(0)
@@ -53,8 +54,9 @@ class ContrastiveLoss(torch.nn.Module):
                 sim = (sim + 1)/2 # normalized to [0,1]
                 sim = torch.sum(sim,dim = 0)/neg_examples
                 sim[1:] = sim[1:] / self.temperature
-                
+                sim_all += sim.detach().cpu().numpy()
+
                 target = torch.zeros_like(sim).cuda()
                 target[0] = 1
                 loss += self.loss(sim,target)
-        return loss/(i+1), sim[0].detach().cpu().numpy(), sim[1:].detach().cpu().numpy().sum()/neg_examples
+        return loss / (i+1) / (idx+1), sim_all[0] / (i+1) / (idx+1), sim_all[1:].sum() / neg_examples * self.temperature / (i+1) / (idx+1)
