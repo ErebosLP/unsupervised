@@ -45,16 +45,12 @@ def main():
 
     model = builder.DetCo(encoder,numClasses)
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     augmentation = [
-            #transforms.RandomResizedCrop(256, scale=(0.6, 1.)),
             transforms.RandomGrayscale(p=0.2),
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.4),
-            #transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(0.8, 0.8, 0.8, 0.2),
             aug.GaussianBlur(1,np.random.uniform(0.1,2)),
-            transforms.RandomApply([aug.Sobel()],p=1),
+            transforms.RandomApply([aug.Sobel()],p=0.5),
             transforms.ToTensor(),
-            #normalize
         ]
     #checkpoint = torch.load('./checkpoint_0150.pth.tar')
     Citydataset = City_imageloader.CityscapeDataset(img_path, 'train',City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
