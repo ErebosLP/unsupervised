@@ -15,19 +15,19 @@ import augmentation as aug
 def main():
     #Hyperparameter    
     numEpochs = 10
-    learningRate = 0.0001
+    learningRate = 0.001
 
     numImgs = 100
     numPatches = 256
-    batchsize = 4
+    batchsize = 1 
     numClasses = 10
-    temperature = 2
-    print_freq = int(100)
+    temperature = 1
+    print_freq = int(10)
     encoder = 'resnet50'
     
-    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize)
+    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_v4' 
     img_path = '/cache/jhembach/dataset/'
-    out_dir = '/cache/results/' + model_name
+    out_dir = '/cache/jhembach/results/' + model_name
     
     start_saving = 0 #when to start saving the max_valid_model
 
@@ -46,7 +46,7 @@ def main():
     model = builder.DetCo(encoder,numClasses)
 
     augmentation = [
-            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomGrayscale(p=0.4),
             transforms.ColorJitter(0.8, 0.8, 0.8, 0.2),
             aug.GaussianBlur(1,np.random.uniform(0.1,2)),
             transforms.RandomApply([aug.Sobel()],p=0.5),
@@ -105,6 +105,11 @@ def main():
             batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k)
             batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig)
             batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k)
+           
+            
+            # batch_loss_g2g /= batchsize
+            # batch_loss_l2l /= batchsize
+            # batch_loss_g2l /= batchsize
             
             batch_loss = batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
 
@@ -120,6 +125,10 @@ def main():
         losses /= idx+1
         writer.add_scalars('Loss',  {'batch loss':losses[0],'global loss':losses[1],'local loss':losses[2] ,'global2local loss':losses[3]}, epoch)
         writer.add_scalars('similarity',  {'pos_g2g':pos_g2g,'pos_l2l':pos_l2l,'pos_g2l':pos_g2l ,'neg_g2g':neg_g2g,'neg_l2l':neg_l2l,'neg_g2l':neg_g2l }, epoch)
+        
+
+        print('pos_g2g',pos_g2g,'pos_l2l',pos_l2l,'pos_g2l',pos_g2l)
+        print('neg_g2g',neg_g2g,'neg_l2l',neg_l2l,'neg_g2l',neg_g2l)
 
                 # update the learning rate
         if epoch % 5 == 0:

@@ -6,13 +6,13 @@ class ContrastiveLoss(torch.nn.Module):
     def __init__(self, num_regions = 4, temperature = 2):
         torch.nn.Module.__init__(self)
         self.temperature = temperature
-        self.loss  = torch.nn.CrossEntropyLoss()
+        self.loss  = torch.nn.BCELoss()
         self.num_regions = num_regions
 
    
     def forward(self, views_1, views_2):#shape [1,16,256,256] -> 16,65536
         loss = 0
-        sim_all = np.zeros((int((view_1.size()[2] * view_1.size()[3])/self.num_regions) + 1,1))
+        sim_all = torch.zeros((int((views_1.size()[2] * views_1.size()[3])/self.num_regions) + 1)).cuda()
         for i in range(views_1.shape[0]):
             z_view1 = views_1[i].unsqueeze(0)
             z_view2 = views_2[i].unsqueeze(0)
@@ -24,9 +24,9 @@ class ContrastiveLoss(torch.nn.Module):
             z_list_1 = []
             z_list_2 = []
             patches_per_row = int(np.sqrt(self.num_regions))
-            for i in range(int(np.sqrt(self.num_regions))):
+            for l in range(int(np.sqrt(self.num_regions))):
                 for j in range(int(np.sqrt(self.num_regions))): 
-                    h0,h1,w0,w1 = i/patches_per_row*h, (i+1)/patches_per_row*h, j/patches_per_row*w, (j+1)/patches_per_row*w
+                    h0,h1,w0,w1 = l/patches_per_row*h, (l+1)/patches_per_row*h, j/patches_per_row*w, (j+1)/patches_per_row*w
 
                     # Patch from view 1
                     patch = z_view1[:, :, int(h0):int(h1), int(w0):int(w1)]
@@ -54,9 +54,9 @@ class ContrastiveLoss(torch.nn.Module):
                 sim = (sim + 1)/2 # normalized to [0,1]
                 sim = torch.sum(sim,dim = 0)/neg_examples
                 sim[1:] = sim[1:] / self.temperature
-                sim_all += sim.detach().cpu().numpy()
-
+                sim_all += sim
                 target = torch.zeros_like(sim).cuda()
                 target[0] = 1
                 loss += self.loss(sim,target)
+                sim_all.detach().cpu().numpy()
         return loss / (i+1) / (idx+1), sim_all[0] / (i+1) / (idx+1), sim_all[1:].sum() / neg_examples * self.temperature / (i+1) / (idx+1)
