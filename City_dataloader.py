@@ -20,9 +20,9 @@ class CityscapeDataset(object):
         self.subset = subset
         self.root_img = root_img
         self.root_mask = root_mask
-        self.img_paths = glob.glob(root_img + subset + '/*/*_leftImg8bit.png')
+        self.img_paths = glob.glob(root_img +'leftImg8bit/'+ subset + '/*/*_leftImg8bit.png')
         self.img_paths.sort()
-        self.mask_paths = glob.glob(root_mask + 'gtfine/' + subset + '/*/*_gtFine_instanceIds.png')
+        self.mask_paths = glob.glob(root_mask + 'gtFine/' + subset + '/*/*_gtFine_instanceIds.png')
         self.mask_paths.sort()
         self.transform = transform
 
@@ -38,9 +38,9 @@ class CityscapeDataset(object):
    
     def __getitem__(self, index):
         img = Image.open(self.img_paths[index])
-        img = T.Resize((244,244))(img) 
+        img = T.Resize((256,256))(img) 
         image_mask = Image.open(self.mask_paths[index])
-        image_mask = T.Resize((244,244),interpolation = T.InterpolationMode.NEAREST)(image_mask) 
+        image_mask = T.Resize((256,256),interpolation = T.InterpolationMode.NEAREST)(image_mask) 
 
         # Compute IMage id
         image_id = torch.tensor([index])

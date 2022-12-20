@@ -32,7 +32,7 @@ def main():
     img_path = '/cache/jhembach/dataset/'
     out_dir = '/cache/jhembach/results/' + model_name
 
-    root_img_val = '/cache/jhembach/Cityscapes_val'
+    root_img_val = '/cache/jhembach/Cityscapes_val/'
     
     start_saving = 0 #when to start saving the max_valid_model
 
@@ -181,7 +181,7 @@ def main():
             
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
-            [instance_sim, class_sim, neg_sim] = val_loss(q,k, target)
+            [instance_sim, class_sim, neg_sim,class_std] = val_loss(q,k, target)
         losses /= idx+1
         CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
         writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
@@ -200,6 +200,11 @@ def main():
                                                                 CLASS_NAMES[7]:class_sim[7],CLASS_NAMES[8]:class_sim[8],
                                                                 CLASS_NAMES[9]:class_sim[9],CLASS_NAMES[1]:class_sim[10]},epoch)   
 
+        writer.add_scalars('similarity_std_validation', {  CLASS_NAMES[1]:class_sim[1],CLASS_NAMES[2]:class_sim[2],
+                                                                CLASS_NAMES[3]:class_sim[3],CLASS_NAMES[4]:class_sim[4],
+                                                                CLASS_NAMES[5]:class_sim[5],CLASS_NAMES[6]:class_sim[6],
+                                                                CLASS_NAMES[7]:class_sim[7],CLASS_NAMES[8]:class_sim[8],
+                                                                CLASS_NAMES[9]:class_sim[9],CLASS_NAMES[1]:class_sim[10]},epoch)   
         writer.add_scalar('similarity_negative_validation',   neg_sim,epoch)
 
         print('pos_g2g_val',pos_g2g_val,'pos_l2l_val',pos_l2l_val,'pos_g2l_val',pos_g2l_val)
