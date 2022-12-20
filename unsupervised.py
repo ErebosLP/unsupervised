@@ -162,11 +162,11 @@ def main():
         #Validation
         print('start validation epoch: ' + str(epoch))
         losses_val = np.array([0.0,0.0,0.0,0.0])
-        counter = torch.zeros(3,11)
-        instance_sim_all = torch.zeros(11)
-        class_sim_all = torch.zeros(11)
-        neg_sim_all = torch.zeros(1)
-        class_std_all = torch.zeros(11)
+        counter = np.zeros((3,11))
+        instance_sim_all = np.zeros(11)
+        class_sim_all = np.zeros(11)
+        neg_sim_all = np.zeros(1)
+        class_std_all = np.zeros(11)
         for idx, (view_1, view_2, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
             view_1 =view_1.cuda()
             view_2 =view_2.cuda()
@@ -187,15 +187,15 @@ def main():
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
             instance_sim, class_sim, neg_sim,class_std = val_loss(q,k, target)
-            instance_sim_all += instance_sim
-            class_sim_all += class_sim
-            neg_sim_all += neg_sim
-            class_std_all += class_std
-            counter += [instance_sim!=0,class_sim!=0,class_std!=0]
-        
-        instance_sim /= counter[0,:]
-        class_sim /= counter[1,:]
-        class_std /= counter[2,:]
+            instance_sim_all += instance_sim.detach().cpu().numpy()
+            class_sim_all += class_sim.detach().cpu().numpy()
+            neg_sim_all += neg_sim.detach().cpu().numpy()
+            class_std_all += class_std.detach().cpu().numpy()
+            counter += [instance_sim.detach().cpu().numpy()!=0,class_sim.detach().cpu().numpy()!=0,class_std.detach().cpu().numpy()!=0]
+        ipdb.set_trace()
+        instance_sim_all /= counter[0,:]
+        class_sim_all /= counter[1,:]
+        class_std_all /= counter[2,:]
 
         losses /= idx+1
         CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
