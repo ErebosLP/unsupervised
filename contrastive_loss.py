@@ -24,8 +24,8 @@ class ContrastiveLoss(torch.nn.Module):
             z_list_1 = []
             z_list_2 = []
             patches_per_row = int(np.sqrt(self.num_regions))
-            for l in range(int(np.sqrt(self.num_regions))):
-                for j in range(int(np.sqrt(self.num_regions))): 
+            for l in range(patches_per_row):
+                for j in range(patches_per_row): 
                     h0,h1,w0,w1 = l/patches_per_row*h, (l+1)/patches_per_row*h, j/patches_per_row*w, (j+1)/patches_per_row*w
 
                     # Patch from view 1
