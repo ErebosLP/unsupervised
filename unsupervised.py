@@ -186,7 +186,7 @@ def main():
             
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
-            instance_sim, class_sim, neg_sim,class_std += val_loss(q,k, target)
+            instance_sim, class_sim, neg_sim,class_std = val_loss(q,k, target)
             instance_sim_all += instance_sim
             class_sim_all += class_sim
             neg_sim_all += neg_sim
