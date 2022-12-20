@@ -12,6 +12,7 @@ import contrastive_loss
 from torch.utils.tensorboard import SummaryWriter
 import utils
 import augmentation as aug
+import instance_loss
 
 def main():
     #Hyperparameter    
@@ -57,7 +58,7 @@ def main():
             transforms.ToTensor(),
         ]
     Citydataset = City_imageloader.CityscapeDataset(img_path,City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
-    Citydataset_validation = City_dataloader.CityscapeDataset(root_img_val, root_img_val ,  'val')
+    Citydataset_validation = City_dataloader.CityscapeDataset(root_img_val, root_img_val ,  'val',City_dataloader.TwoCropsTransform(transforms.Compose(augmentation)))
     numImgs = Citydataset.__len__()
 
     # #########################################
@@ -86,6 +87,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, numEpochs)
 
     loss = contrastive_loss.ContrastiveLoss(numPatches, temperature)
+    val_loss = instance_loss.InstanceLoss()
     t1 = time.time()
     for epoch in range(numEpochs):
         torch.cuda.empty_cache()
@@ -160,12 +162,11 @@ def main():
         #Validation
         print('start validation epoch: ' + str(epoch))
         losses_val = np.array([0.0,0.0,0.0,0.0])
-        for idx, (view_1,view_2) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
+        for idx, (view_1, view_2, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
             view_1 =view_1.cuda()
             view_2 =view_2.cuda()
             
             q,k = model(im_q=view_1, im_k=view_2)
-            
             view_1_jig ,view_1_perm = aug._jigsaw(view_1)
             view_2_jig ,view_2_perm = aug._jigsaw(view_2)
             q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
@@ -178,10 +179,26 @@ def main():
             batch_loss_val = batch_loss_g2g_val +batch_loss_l2l_val +  batch_loss_g2l_val
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
+            [instance_sim, class_sim, neg_sim] = val_loss(q,k, target)
         losses /= idx+1
+        CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
         writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
         writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
-        
+        writer.add_scalars('similarity_instance_validation',{'instance':instance_sim, 'class': class_sim, 'neg':neg_sim} )
+
+        writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim[1],CLASS_NAMES[2]:instance_sim[2],
+                                                                CLASS_NAMES[3]:instance_sim[3],CLASS_NAMES[4]:instance_sim[4],
+                                                                CLASS_NAMES[5]:instance_sim[5],CLASS_NAMES[6]:instance_sim[6],
+                                                                CLASS_NAMES[7]:instance_sim[7],CLASS_NAMES[8]:instance_sim[8],
+                                                                CLASS_NAMES[9]:instance_sim[9],CLASS_NAMES[10]:instance_sim[10]},epoch)
+
+        writer.add_scalars('similarity_class_validation', {  CLASS_NAMES[1]:class_sim[1],CLASS_NAMES[2]:class_sim[2],
+                                                                CLASS_NAMES[3]:class_sim[3],CLASS_NAMES[4]:class_sim[4],
+                                                                CLASS_NAMES[5]:class_sim[5],CLASS_NAMES[6]:class_sim[6],
+                                                                CLASS_NAMES[7]:class_sim[7],CLASS_NAMES[8]:class_sim[8],
+                                                                CLASS_NAMES[9]:class_sim[9],CLASS_NAMES[1]:class_sim[10]},epoch)   
+
+        writer.add_scalar('similarity_negative_validation',   neg_sim,epoch)
 
         print('pos_g2g_val',pos_g2g_val,'pos_l2l_val',pos_l2l_val,'pos_g2l_val',pos_g2l_val)
         print('neg_g2g_val',neg_g2g_val,'neg_l2l_val',neg_l2l_val,'neg_g2l_val',neg_g2l_val)           

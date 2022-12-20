@@ -15,7 +15,7 @@ import glob
 
 class CityscapeDataset(object):
 
-    def __init__(self,root_img, root_mask ,  subset):
+    def __init__(self,root_img, root_mask ,  subset, transform):
         
         self.subset = subset
         self.root_img = root_img
@@ -24,6 +24,7 @@ class CityscapeDataset(object):
         self.img_paths.sort()
         self.mask_paths = glob.glob(root_mask + 'gtfine/' + subset + '/*/*_gtFine_instanceIds.png')
         self.mask_paths.sort()
+        self.transform = transform
 
         transforms = []
         transforms.append(T.ToTensor())
@@ -76,18 +77,17 @@ class CityscapeDataset(object):
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         
         # target values to Tensor
-        if self.as_tensor:
-            if len(labels) == 0:
-                
-                labels = torch.zeros(1, dtype=torch.int64)
-                masks = torch.zeros(np.shape(image_mask), dtype=torch.uint8).unsqueeze(0)
-                boxes = torch.as_tensor([0,0,1024,2048],dtype=torch.float32).unsqueeze(0)
-                area = torch.as_tensor([1024*2048], dtype=torch.float32)               
-            else:
-                labels = torch.as_tensor(labels, dtype=torch.int64)
-                masks = torch.as_tensor(np.array(masks), dtype=torch.uint8)  #load if used for training
-                boxes = torch.as_tensor(boxes, dtype=torch.float32)   
-                area = torch.as_tensor(area, dtype=torch.float32)
+        if len(labels) == 0:
+            
+            labels = torch.zeros(1, dtype=torch.int64)
+            masks = torch.zeros(np.shape(image_mask), dtype=torch.uint8).unsqueeze(0)
+            boxes = torch.as_tensor([0,0,1024,2048],dtype=torch.float32).unsqueeze(0)
+            area = torch.as_tensor([1024*2048], dtype=torch.float32)               
+        else:
+            labels = torch.as_tensor(labels, dtype=torch.int64)
+            masks = torch.as_tensor(np.array(masks), dtype=torch.uint8)  #load if used for training
+            boxes = torch.as_tensor(boxes, dtype=torch.float32)   
+            area = torch.as_tensor(area, dtype=torch.float32)
         
         # is Crowd füllen
         iscrowd = torch.zeros((len(labels),), dtype=torch.int64)
@@ -101,6 +101,14 @@ class CityscapeDataset(object):
         target["area"] = area
         target["iscrowd"] = iscrowd
 
-        img, target = self.transforms_in(img, target)
-        return img, target
+        return self.transform(img,target)
       
+class TwoCropsTransform:
+
+    def __init__(self, base_transform):
+        self.base_transform = base_transform
+
+    def __call__(self, x, target):
+        q = self.base_transform(x)
+        k = self.base_transform(x)
+        return [q, k, target]
