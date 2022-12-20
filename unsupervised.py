@@ -14,15 +14,15 @@ import augmentation as aug
 
 def main():
     #Hyperparameter    
-    numEpochs = 10
+    numEpochs = 100
     learningRate = 0.001
 
-    numImgs = 100
+    numImgs = 10000
     numPatches = 256
     batchsize = 1 
     numClasses = 10
     temperature = 1
-    print_freq = int(10)
+    print_freq = int(1000)
     encoder = 'resnet50'
     
     model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_v4' 
