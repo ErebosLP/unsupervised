@@ -19,16 +19,16 @@ def main():
     numEpochs = 100
     learningRate = 0.001
 
-    numImgs = 10000
+    numImgs = 100
     numPatches = 256
     batchsize = 1 
     numClasses = 10
     temperature = 1
-    print_freq = int(1000)
+    print_freq = int(10)
     print_freq_val = int(125)
     encoder = 'resnet50'
     
-    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_RELU' 
+    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_ABS' 
     img_path = '/cache/jhembach/dataset/'
     out_dir = '/cache/jhembach/results/' + model_name
 
@@ -177,6 +177,8 @@ def main():
             batch_loss_l2l_val, pos_l2l_val, neg_l2l_val = loss(q_jig,k_jig)
             batch_loss_g2l_val, pos_g2l_val, neg_g2l_val = loss(q_jig,k)
             batch_loss_val = batch_loss_g2g_val +batch_loss_l2l_val +  batch_loss_g2l_val
+            metric_logger.update(loss=batch_loss_val)
+            
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
             [instance_sim, class_sim, neg_sim] = val_loss(q,k, target)
