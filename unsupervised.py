@@ -162,6 +162,11 @@ def main():
         #Validation
         print('start validation epoch: ' + str(epoch))
         losses_val = np.array([0.0,0.0,0.0,0.0])
+        counter = torch.zeros(3,11)
+        instance_sim = torch.zeros(11)
+        class_sim = torch.zeros(11)
+        neg_sim = torch.zeros(1)
+        class_std = torch.zeros(11)
         for idx, (view_1, view_2, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
             view_1 =view_1.cuda()
             view_2 =view_2.cuda()
@@ -181,7 +186,13 @@ def main():
             
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
-            [instance_sim, class_sim, neg_sim,class_std] = val_loss(q,k, target)
+            [instance_sim, class_sim, neg_sim,class_std] += val_loss(q,k, target)
+            counter += [instance_sim!=0,class_sim!=0,class_std!=0]
+        
+        instance_sim /= counter[0,:]
+        class_sim /= counter[1,:]
+        class_std /= counter[2,:]
+
         losses /= idx+1
         CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
         writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
