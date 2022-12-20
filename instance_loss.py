@@ -10,10 +10,10 @@ class InstanceLoss(torch.nn.Module):
 
    
     def forward(self, views_1, views_2, target):#shape [1,16,256,256] -> 16,65536
-        instance_sim = torch.zeros(11)
-        class_sim = torch.zeros(11)
-        class_std = torch.zeros(11,10)
-        neg_sim = 0
+        instance_sim = torch.zeros(11).cuda()
+        class_sim = torch.zeros(11).cuda()
+        class_std = torch.zeros((11,10)).cuda()
+        neg_sim = torch.zeros(1).cuda()
 
         instances_view1 = []
         instances_view2 = []
