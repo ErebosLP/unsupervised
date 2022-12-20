@@ -27,7 +27,7 @@ def main():
     print_freq_val = int(125)
     encoder = 'resnet50'
     
-    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_v4' 
+    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_RELU' 
     img_path = '/cache/jhembach/dataset/'
     out_dir = '/cache/jhembach/results/' + model_name
 
