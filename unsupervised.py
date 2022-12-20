@@ -196,31 +196,31 @@ def main():
         instance_sim_all /= counter[0,:]
         class_sim_all /= counter[1,:]
         class_std_all /= counter[2,:]
-
+        ipdb.set_trace()
         losses /= idx+1
         CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
         writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
         writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
         writer.add_scalars('similarity_instance_validation',{'instance':instance_sim, 'class': class_sim, 'neg':neg_sim} )
 
-        writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim[1],CLASS_NAMES[2]:instance_sim[2],
-                                                                CLASS_NAMES[3]:instance_sim[3],CLASS_NAMES[4]:instance_sim[4],
-                                                                CLASS_NAMES[5]:instance_sim[5],CLASS_NAMES[6]:instance_sim[6],
-                                                                CLASS_NAMES[7]:instance_sim[7],CLASS_NAMES[8]:instance_sim[8],
-                                                                CLASS_NAMES[9]:instance_sim[9],CLASS_NAMES[10]:instance_sim[10]},epoch)
+        writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim_all[1],CLASS_NAMES[2]:instance_sim_all[2],
+                                                                CLASS_NAMES[3]:instance_sim_all[3],CLASS_NAMES[4]:instance_sim_all[4],
+                                                                CLASS_NAMES[5]:instance_sim_all[5],CLASS_NAMES[6]:instance_sim_all[6],
+                                                                CLASS_NAMES[7]:instance_sim_all[7],CLASS_NAMES[8]:instance_sim_all[8],
+                                                                CLASS_NAMES[9]:instance_sim_all[9],CLASS_NAMES[10]:instance_sim_all[10]},epoch)
 
-        writer.add_scalars('similarity_class_validation', {  CLASS_NAMES[1]:class_sim[1],CLASS_NAMES[2]:class_sim[2],
-                                                                CLASS_NAMES[3]:class_sim[3],CLASS_NAMES[4]:class_sim[4],
-                                                                CLASS_NAMES[5]:class_sim[5],CLASS_NAMES[6]:class_sim[6],
-                                                                CLASS_NAMES[7]:class_sim[7],CLASS_NAMES[8]:class_sim[8],
-                                                                CLASS_NAMES[9]:class_sim[9],CLASS_NAMES[1]:class_sim[10]},epoch)   
+        writer.add_scalars('similarity_class_validation', {     CLASS_NAMES[1]:class_sim_all[1],CLASS_NAMES[2]:class_sim_all[2],
+                                                                CLASS_NAMES[3]:class_sim_all[3],CLASS_NAMES[4]:class_sim_all[4],
+                                                                CLASS_NAMES[5]:class_sim_all[5],CLASS_NAMES[6]:class_sim_all[6],
+                                                                CLASS_NAMES[7]:class_sim_all[7],CLASS_NAMES[8]:class_sim_all[8],
+                                                                CLASS_NAMES[9]:class_sim_all[9],CLASS_NAMES[10]:class_sim_all[10]},epoch)   
 
-        writer.add_scalars('similarity_std_validation', {  CLASS_NAMES[1]:class_sim[1],CLASS_NAMES[2]:class_sim[2],
-                                                                CLASS_NAMES[3]:class_sim[3],CLASS_NAMES[4]:class_sim[4],
-                                                                CLASS_NAMES[5]:class_sim[5],CLASS_NAMES[6]:class_sim[6],
-                                                                CLASS_NAMES[7]:class_sim[7],CLASS_NAMES[8]:class_sim[8],
-                                                                CLASS_NAMES[9]:class_sim[9],CLASS_NAMES[1]:class_sim[10]},epoch)   
-        writer.add_scalar('similarity_negative_validation',   neg_sim,epoch)
+        writer.add_scalars('similarity_std_validation', {  CLASS_NAMES[1]:class_std_all[1],CLASS_NAMES[2]:class_std_all[2],
+                                                                CLASS_NAMES[3]:class_std_all[3],CLASS_NAMES[4]:class_std_all[4],
+                                                                CLASS_NAMES[5]:class_std_all[5],CLASS_NAMES[6]:class_std_all[6],
+                                                                CLASS_NAMES[7]:class_std_all[7],CLASS_NAMES[8]:class_std_all[8],
+                                                                CLASS_NAMES[9]:class_std_all[9],CLASS_NAMES[10]:class_std_all[10]},epoch)   
+        writer.add_scalar('similarity_negative_validation',   neg_sim_all,epoch)
 
         print('pos_g2g_val',pos_g2g_val,'pos_l2l_val',pos_l2l_val,'pos_g2l_val',pos_g2l_val)
         print('neg_g2g_val',neg_g2g_val,'neg_l2l_val',neg_l2l_val,'neg_g2l_val',neg_g2l_val)           

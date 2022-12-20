@@ -51,7 +51,8 @@ class InstanceLoss(torch.nn.Module):
         neg_sim /= count_neg_instances
         for class_ in np.unique(classes):
             class_sum = torch.tensor(np.sum(classes == class_)).cuda()
-            instance_sim[class_] /= class_sum
-            class_sim[class_] /= class_sum * (class_sum - 1)
-            class_std[class_] /= class_sum
+            if class_sum > 1:
+                instance_sim[class_] /= class_sum
+                class_sim[class_] /= class_sum * (class_sum - 1)
+                class_std[class_] /= class_sum
         return instance_sim, class_sim, neg_sim,class_std
