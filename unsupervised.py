@@ -19,12 +19,12 @@ def main():
     numEpochs = 100
     learningRate = 0.001
 
-    numImgs = 100
+    numImgs = 10000
     numPatches = 256
     batchsize = 1 
     numClasses = 10
     temperature = 1
-    print_freq = int(10)
+    print_freq = int(1000)
     print_freq_val = int(125)
     encoder = 'resnet50'
     
@@ -78,7 +78,6 @@ def main():
     ##########################################
 
     model.to('cuda')
-    model.eval()
     train_loader = torch.utils.data.DataLoader(Citydataset, batch_size=batchsize, shuffle=True, num_workers=1, pin_memory=True, drop_last=False)
     val_loader = torch.utils.data.DataLoader(Citydataset_validation, batch_size=1, shuffle=False, num_workers=1, pin_memory=True, drop_last=False)
 
@@ -160,6 +159,7 @@ def main():
         time_estimate = (time.time() - t1) / (epoch + 1) * (numEpochs - (epoch + 1))
         
         #Validation
+        model.eval()
         print('start validation epoch: ' + str(epoch))
         losses_val = np.array([0.0,0.0,0.0,0.0])
         counter = np.zeros((3,11))
@@ -192,16 +192,14 @@ def main():
             neg_sim_all += neg_sim.detach().cpu().numpy()
             class_std_all += class_std.detach().cpu().numpy()
             counter += [instance_sim.detach().cpu().numpy()!=0,class_sim.detach().cpu().numpy()!=0,class_std.detach().cpu().numpy()!=0]
-        ipdb.set_trace()
         instance_sim_all /= counter[0,:]
-        class_sim_all /= counter[1,:]
         class_std_all /= counter[2,:]
-        ipdb.set_trace()
-        losses /= idx+1
+        class_sim_all = np.nan_to_num(class_sim_all / counter[1,:])
+        neg_sim_all /=idx+1
+        losses_val /= idx+1
         CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
         writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
         writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
-        writer.add_scalars('similarity_instance_validation',{'instance':instance_sim, 'class': class_sim, 'neg':neg_sim} )
 
         writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim_all[1],CLASS_NAMES[2]:instance_sim_all[2],
                                                                 CLASS_NAMES[3]:instance_sim_all[3],CLASS_NAMES[4]:instance_sim_all[4],

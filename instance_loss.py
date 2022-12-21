@@ -47,8 +47,8 @@ class InstanceLoss(torch.nn.Module):
                     sim = torch.nn.CosineSimilarity(dim=1,eps=1e-8)(mean_vec,instances_view2[compare])
                     neg_sim += sim.mean()
                     count_neg_instances += 1
-        
-        neg_sim /= count_neg_instances
+        if (len(np.unique(classes)) > 1):
+            neg_sim /= count_neg_instances
         for class_ in np.unique(classes):
             class_sum = torch.tensor(np.sum(classes == class_)).cuda()
             if class_sum > 1:
