@@ -35,7 +35,6 @@ class CityscapeDataset(object):
        return self.length
    
     def __getitem__(self, index):
-        index *= 3
         img = Image.open(self.img_paths[index])
         img = T.Resize((256,256))(img) 
 
