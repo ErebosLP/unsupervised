@@ -13,7 +13,13 @@ class InstanceLoss(torch.nn.Module):
         instance_sim = torch.zeros(11).cuda()
         class_sim = torch.zeros(11).cuda()
         class_std = torch.zeros((11)).cuda()
-        neg_sim = torch.zeros(1).cuda()
+        neg_sim_4wheel_human = torch.zeros(1).cuda()
+        neg_sim_4wheel_2wheel = torch.zeros(1).cuda()
+        neg_sim_human_2wheel = torch.zeros(1).cuda()
+
+        count_4wheel_human = torch.zeros(1).cuda()
+        count_4wheel_2wheel = torch.zeros(1).cuda()
+        count_human_2wheel = torch.zeros(1).cuda()
 
         instances_view1 = []
         instances_view2 = []
@@ -45,14 +51,31 @@ class InstanceLoss(torch.nn.Module):
                 else:
                     mean_vec = torch.ones(instances_view2[compare].shape).cuda() * mean
                     sim = torch.nn.CosineSimilarity(dim=1,eps=1e-8)(mean_vec,instances_view2[compare])
-                    neg_sim += sim.mean()
-                    count_neg_instances += 1
-        if (len(np.unique(classes)) > 1):
-            neg_sim /= count_neg_instances
+                    if (classes[instance] in range(1,3) or classes[instance] in range(3,9)):
+                        if (classes[compare] in range(3,9) or classes[compare] in range(1,3)):
+                            count_4wheel_human += 1
+                            neg_sim_4wheel_human += sim.mean()
+                    if (classes[instance] in range(9,11) or classes[instance] in range(3,9)):
+                        if (classes[compare] in range(3,9) or classes[compare] in range(9,11)):
+                            count_4wheel_2wheel += 1
+                            neg_sim_4wheel_2wheel += sim.mean()
+                    if (classes[instance] in range(1,3) or classes[instance] in range(9,11)):
+                        if (classes[compare] in range(9,11) or classes[compare] in range(1,3)):
+                            count_human_2wheel += 1
+                            neg_sim_human_2wheel += sim.mean()
+
+
+        if (count_4wheel_human > 1):
+            neg_sim_4wheel_human /= count_4wheel_human
+        if (count_4wheel_2wheel > 1):
+            neg_sim_4wheel_2wheel /= count_4wheel_2wheel
+        if (count_human_2wheel > 1):
+            neg_sim_human_2wheel /= count_human_2wheel
+
         for class_ in np.unique(classes):
             class_sum = torch.tensor(np.sum(classes == class_)).cuda()
             if class_sum > 1:
                 instance_sim[class_] /= class_sum
                 class_sim[class_] /= class_sum * (class_sum - 1)
                 class_std[class_] /= class_sum
-        return instance_sim, class_sim, neg_sim,class_std
+        return instance_sim, class_sim, neg_sim_4wheel_human,neg_sim_4wheel_2wheel,neg_sim_human_2wheel,class_std

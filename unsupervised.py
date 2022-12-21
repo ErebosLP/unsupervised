@@ -165,7 +165,12 @@ def main():
         counter = np.zeros((3,11))
         instance_sim_all = np.zeros(11)
         class_sim_all = np.zeros(11)
-        neg_sim_all = np.zeros(1)
+        neg_sim_4wheel_human_all = np.zeros(1)
+        neg_sim_4wheel_human_count = 0
+        neg_sim_4wheel_2wheel_all = np.zeros(1)
+        neg_sim_4wheel_2wheel_count = 0
+        neg_sim_human_2wheel_all = np.zeros(1)
+        neg_sim_human_2wheel_count = 0
         class_std_all = np.zeros(11)
         for idx, (view_1, view_2, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
             view_1 =view_1.cuda()
@@ -186,16 +191,29 @@ def main():
             
 
             losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
-            instance_sim, class_sim, neg_sim,class_std = val_loss(q,k, target)
+            instance_sim, class_sim, neg_sim_4wheel_human,neg_sim_4wheel_2wheel,neg_sim_human_2wheel,class_std = val_loss(q,k, target)
             instance_sim_all += instance_sim.detach().cpu().numpy()
             class_sim_all += class_sim.detach().cpu().numpy()
-            neg_sim_all += neg_sim.detach().cpu().numpy()
+            if (neg_sim_4wheel_human > 0):
+                neg_sim_4wheel_human_all += neg_sim_4wheel_human.detach().cpu().numpy()
+                neg_sim_4wheel_human_count += 1
+            if (neg_sim_4wheel_2wheel > 0):
+                neg_sim_4wheel_2wheel_all += neg_sim_4wheel_2wheel.detach().cpu().numpy()
+                neg_sim_4wheel_2wheel_count += 1
+            if (neg_sim_human_2wheel > 0):
+                neg_sim_human_2wheel_all += neg_sim_human_2wheel.detach().cpu().numpy()
+                neg_sim_human_2wheel_count += 1
+
+
+
             class_std_all += class_std.detach().cpu().numpy()
             counter += [instance_sim.detach().cpu().numpy()!=0,class_sim.detach().cpu().numpy()!=0,class_std.detach().cpu().numpy()!=0]
         instance_sim_all /= counter[0,:]
         class_std_all /= counter[2,:]
         class_sim_all = np.nan_to_num(class_sim_all / counter[1,:])
-        neg_sim_all /=idx+1
+        neg_sim_4wheel_human_all /=neg_sim_4wheel_human_count
+        neg_sim_4wheel_2wheel_all /=neg_sim_4wheel_2wheel_count
+        neg_sim_human_2wheel_all /=neg_sim_human_2wheel_count
         losses_val /= idx+1
         CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
         writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
@@ -218,7 +236,9 @@ def main():
                                                                 CLASS_NAMES[5]:class_std_all[5],CLASS_NAMES[6]:class_std_all[6],
                                                                 CLASS_NAMES[7]:class_std_all[7],CLASS_NAMES[8]:class_std_all[8],
                                                                 CLASS_NAMES[9]:class_std_all[9],CLASS_NAMES[10]:class_std_all[10]},epoch)   
-        writer.add_scalar('similarity_negative_validation',   neg_sim_all,epoch)
+        writer.add_scalar('similarity_negative_validation',{'neg_sim_4wheel_human_all':neg_sim_4wheel_human_all,
+                                                            'neg_sim_4wheel_2wheel_all':neg_sim_4wheel_2wheel_all,
+                                                            'neg_sim_human_2wheel_all':neg_sim_human_2wheel_all},epoch)
 
         print('pos_g2g_val',pos_g2g_val,'pos_l2l_val',pos_l2l_val,'pos_g2l_val',pos_g2l_val)
         print('neg_g2g_val',neg_g2g_val,'neg_l2l_val',neg_l2l_val,'neg_g2l_val',neg_g2l_val)           
