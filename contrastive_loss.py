@@ -33,9 +33,9 @@ class ContrastiveLoss(torch.nn.Module):
             for idx in range(z_view1_vec.shape[1]):
                 height = int(idx/w)
                 width = idx%w
-                for i in range(self.neg_examples):
-                    euc_dist[idx,i] = torch.norm(torch.tensor([height,width],dtype=float).to('cuda')-torch.tensor([neg_idx[0,idx,i],neg_idx[1,idx,i]],dtype=float).to('cuda'))
-                    rgb_dist[idx,i] = torch.norm(img[0,:,height,width] - img[0,:,neg_idx[0,idx,i],neg_idx[1,idx,i]])
+                for j in range(self.neg_examples):
+                    euc_dist[idx,j] = torch.norm(torch.tensor([height,width],dtype=float).to('cuda')-torch.tensor([neg_idx[0,idx,j],neg_idx[1,idx,j]],dtype=float).to('cuda'))
+                    rgb_dist[idx,j] = torch.norm(img[0,:,height,width] - img[0,:,neg_idx[0,idx,j],neg_idx[1,idx,j]])
             euc_dist /= torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
             rgb_dist /= torch.sqrt(torch.tensor([3.]).to('cuda'))
             weight = euc_dist * self.factor + rgb_dist * (1-self.factor)
@@ -55,4 +55,4 @@ class ContrastiveLoss(torch.nn.Module):
             target[0] = 1
             loss += self.loss(sim,target)
             sim_all.detach().cpu().numpy()
-        return loss / (i+1) / (idx+1), sim_all[0] / (i+1) / (idx+1), sim_all[1:].sum() / self.neg_examples * self.temperature / (i+1) / (idx+1)
+        return loss / (i+1), sim_all[0] / (i+1) , sim_all[1:].sum() / self.neg_examples * self.temperature / (i+1) 

@@ -16,7 +16,7 @@ import instance_loss
 
 def main():
     #Hyperparameter    
-    numEpochs = 100
+    numEpochs = 10
     learningRate = 0.001
     numImgs = 100
     neg_examples = 10
@@ -25,12 +25,12 @@ def main():
     numClasses = 10
     temperature = 1
     print_freq = int(1)
-    print_freq_val = int(1)
+    print_freq_val = int(10)
     encoder = 'resnet50'
     
-    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + '_0301_BCELoss_ABS' 
+    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + '_1701_euc_rgb_dist' 
     img_path = '/cache/jhembach/dataset/'
-    out_dir = '/cache/jhembach/results/' + model_name
+    out_dir = '/cache/jhembach/results/test/' + model_name
 
     root_img_val = '/cache/jhembach/Cityscapes_val/'
     
@@ -172,7 +172,7 @@ def main():
         neg_sim_human_2wheel_all = np.zeros(1)
         neg_sim_human_2wheel_count = 0
         class_std_all = np.zeros(11)
-        for idx, (view_1, view_2, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
+        for idx, (view_1, view_2, img, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
             view_1 =view_1.cuda()
             view_2 =view_2.cuda()
             
@@ -183,9 +183,9 @@ def main():
             q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
             k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
 
-            batch_loss_g2g_val, pos_g2g_val, neg_g2g_val = loss(q,k)
-            batch_loss_l2l_val, pos_l2l_val, neg_l2l_val = loss(q_jig,k_jig)
-            batch_loss_g2l_val, pos_g2l_val, neg_g2l_val = loss(q_jig,k)
+            batch_loss_g2g_val, pos_g2g_val, neg_g2g_val = loss(q,k,img)
+            batch_loss_l2l_val, pos_l2l_val, neg_l2l_val = loss(q_jig,k_jig,img)
+            batch_loss_g2l_val, pos_g2l_val, neg_g2l_val = loss(q_jig,k,img)
             batch_loss_val = batch_loss_g2g_val +batch_loss_l2l_val +  batch_loss_g2l_val
             metric_logger.update(loss=batch_loss_val)
             

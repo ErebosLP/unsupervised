@@ -34,7 +34,7 @@ class CityscapeDataset(object):
         print('num_masks: ',len(self.mask_paths))
    
     def __len__(self):
-       return len(self.img_paths)
+       return 10 #len(self.img_paths)
    
     def __getitem__(self, index):
         img = Image.open(self.img_paths[index])
@@ -111,4 +111,4 @@ class TwoCropsTransform:
     def __call__(self, x, target):
         q = self.base_transform(x)
         k = self.base_transform(x)
-        return [q, k, target]
+        return [q, k,T.ToTensor()(x), target]
