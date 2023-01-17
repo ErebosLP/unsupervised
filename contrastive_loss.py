@@ -13,16 +13,14 @@ class ContrastiveLoss(torch.nn.Module):
     def forward(self, views_1, views_2,img):
         loss = 0
         sim_all = torch.zeros((self.neg_examples + 1)).cuda()
+        batch, c, h, w = views_1[0].unsqueeze(0).size()
+        height  = np.floor(np.arange(h*w)/w).astype(int)
+        width = np.floor(np.arange(h*w)%w).astype(int)
         for i in range(views_1.shape[0]):
             z_view1 = views_1[i].unsqueeze(0)
             z_view2 = views_2[i].unsqueeze(0)
             ########################################################################################################################################################################
-            
             ########################################################################################################################################################################
-            
-            batch, c, h, w = z_view1.size()
-            
-            
             z_view1_vec = torch.reshape(z_view1,[batch,c,h*w]).squeeze(0).unsqueeze(2)
             
             neg_idx = np.array([np.random.choice(h,(h*w,self.neg_examples)),np.random.choice(w,(h*w,self.neg_examples))])
@@ -31,11 +29,8 @@ class ContrastiveLoss(torch.nn.Module):
             euc_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
             rgb_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
             for idx in range(z_view1_vec.shape[1]):
-                height = int(idx/w)
-                width = idx%w
-                for j in range(self.neg_examples):
-                    euc_dist[idx,j] = torch.norm(torch.tensor([height,width],dtype=float).to('cuda')-torch.tensor([neg_idx[0,idx,j],neg_idx[1,idx,j]],dtype=float).to('cuda'))
-                    rgb_dist[idx,j] = torch.norm(img[0,:,height,width] - img[0,:,neg_idx[0,idx,j],neg_idx[1,idx,j]])
+                euc_dist[idx] = torch.norm(torch.subtract(torch.tensor(np.array([height[idx],width[idx]]).reshape(2,1),dtype=float), torch.tensor(np.array([neg_idx[0,idx,:],neg_idx[1,idx,:]]),dtype=float)).to('cuda'))
+                rgb_dist[idx] = torch.norm(torch.subtract(img[0,:,height[idx],width[idx]], img[0,:,neg_idx[0,idx,:],neg_idx[1,idx,:]]))
             euc_dist /= torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
             rgb_dist /= torch.sqrt(torch.tensor([3.]).to('cuda'))
             weight = euc_dist * self.factor + rgb_dist * (1-self.factor)
