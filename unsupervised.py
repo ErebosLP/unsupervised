@@ -31,7 +31,7 @@ def main():
         weight_factor = weight_factors[config%8]
         neg_examples = neg_exampless[int(config/8)]
         numImgs = numImgss[int(config/16)]
-        model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + '_1701_euc_rgb_dist' 
+        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_1701_euc_rgb_dist' 
         img_path = '/cache/jhembach/dataset/'
         out_dir = '/cache/jhembach/results/test/' + model_name
 
