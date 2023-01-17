@@ -18,14 +18,14 @@ def main():
     #Hyperparameter    
     numEpochs = 100
     learningRate = 0.001
-
-    numImgs = 100000
-    numPatches = 256
+    numImgs = 100
+    neg_examples = 10
+    weight_factor = 0.8 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
     numClasses = 10
     temperature = 1
-    print_freq = int(25000)
-    print_freq_val = int(125)
+    print_freq = int(1)
+    print_freq_val = int(1)
     encoder = 'resnet50'
     
     model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + '_0301_BCELoss_ABS' 
@@ -85,7 +85,7 @@ def main():
     optimizer = torch.optim.Adam(params, lr=learningRate, weight_decay=0.0005)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, numEpochs)
 
-    loss = contrastive_loss.ContrastiveLoss(numPatches, temperature)
+    loss = contrastive_loss.ContrastiveLoss(temperature,weight_factor, neg_examples)
     val_loss = instance_loss.InstanceLoss()
     t1 = time.time()
     for epoch in range(numEpochs):
@@ -96,7 +96,7 @@ def main():
         header = 'Epoch: [{}]'.format(epoch)
         print('start train epoch: ' + str(epoch))
         losses = np.array([0.0,0.0,0.0,0.0])
-        for idx, (view_1,view_2) in enumerate(metric_logger.log_every(train_loader,print_freq,header)):
+        for idx, (view_1,view_2, img ) in enumerate(metric_logger.log_every(train_loader,print_freq,header)):
             
             view_1 =view_1.cuda()
             view_2 =view_2.cuda()
@@ -109,9 +109,9 @@ def main():
             q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
             k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
 
-            batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k)
-            batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig)
-            batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k)
+            batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k, img)
+            batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig, img)
+            batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k, img)
            
             
             # batch_loss_g2g /= batchsize

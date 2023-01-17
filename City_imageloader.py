@@ -22,7 +22,7 @@ class CityscapeDataset(object):
     def __init__(self,root ,transform,num_imgs = np.inf):
         
         self.root = root
-        self.img_paths = glob.glob(root + '/*.jpg')
+        self.img_paths = glob.glob(root + '/*.png')
         self.img_paths.sort()
         print('num_images: ',len(self.img_paths))
         self.transform = transform
@@ -50,4 +50,4 @@ class TwoCropsTransform:
     def __call__(self, x):
         q = self.base_transform(x)
         k = self.base_transform(x)
-        return [q, k]
+        return [q, k, T.ToTensor()(x)]

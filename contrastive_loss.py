@@ -3,63 +3,56 @@ import numpy as np
 import ipdb
 class ContrastiveLoss(torch.nn.Module):
     # from paper the optimal temperature is 0.5
-    def __init__(self, num_regions = 4, temperature = 2):
+    def __init__(self, temperature = 2, factor = 0.8,neg_examples = 256):
         torch.nn.Module.__init__(self)
         self.temperature = temperature
         self.loss  = torch.nn.BCELoss()
-        self.num_regions = num_regions
-
+        self.factor = factor
+        self.neg_examples = neg_examples
    
-    def forward(self, views_1, views_2):#shape [1,16,256,256] -> 16,65536
+    def forward(self, views_1, views_2,img):
         loss = 0
-        sim_all = torch.zeros((int((views_1.size()[2] * views_1.size()[3])/self.num_regions) + 1)).cuda()
+        sim_all = torch.zeros((self.neg_examples + 1)).cuda()
         for i in range(views_1.shape[0]):
             z_view1 = views_1[i].unsqueeze(0)
             z_view2 = views_2[i].unsqueeze(0)
-            _, _, h, w = z_view1.size()
-            #h,w =32,32########################################################################################################################################################################
-            neg_examples = int(h*w/self.num_regions)
+            ########################################################################################################################################################################
             
-            # Compute the Region of Intrest
-            z_list_1 = []
-            z_list_2 = []
-            patches_per_row = int(np.sqrt(self.num_regions))
-            for l in range(patches_per_row):
-                for j in range(patches_per_row): 
-                    h0,h1,w0,w1 = l/patches_per_row*h, (l+1)/patches_per_row*h, j/patches_per_row*w, (j+1)/patches_per_row*w
+            ########################################################################################################################################################################
+            
+            batch, c, h, w = z_view1.size()
+            
+            
+            z_view1_vec = torch.reshape(z_view1,[batch,c,h*w]).squeeze(0).unsqueeze(2)
+            
+            neg_idx = np.array([np.random.choice(h,(h*w,self.neg_examples)),np.random.choice(w,(h*w,self.neg_examples))])
+            patch_neg = z_view2[:,:,neg_idx[0],neg_idx[1]].squeeze(0)   
 
-                    # Patch from view 1
-                    patch = z_view1[:, :, int(h0):int(h1), int(w0):int(w1)]
-                    patch = (patch - patch.mean()) / patch.std()
-                    z_list_1 += [patch]
+            euc_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
+            rgb_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
+            for idx in range(z_view1_vec.shape[1]):
+                height = int(idx/w)
+                width = idx%w
+                for i in range(self.neg_examples):
+                    euc_dist[idx,i] = torch.norm(torch.tensor([height,width],dtype=float).to('cuda')-torch.tensor([neg_idx[0,idx,i],neg_idx[1,idx,i]],dtype=float).to('cuda'))
+                    rgb_dist[idx,i] = torch.norm(img[0,:,height,width] - img[0,:,neg_idx[0,idx,i],neg_idx[1,idx,i]])
+            euc_dist /= torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
+            rgb_dist /= torch.sqrt(torch.tensor([3.]).to('cuda'))
+            weight = euc_dist * self.factor + rgb_dist * (1-self.factor)
+            patch_stack = z_view1_vec.repeat(1,1,self.neg_examples+1)
 
-                    # Patch from view 2
-                    patch = z_view2[:, :, int(h0):int(h1), int(w0):int(w1)]
-                    patch = (patch - patch.mean()) / patch.std()
-                    z_list_2 += [patch]
-            
-            for idx , patch in enumerate(z_list_1):
-                patch_neg_idx = self.num_regions - 1 - idx
-            
-                patch = torch.reshape(patch,(neg_examples,views_1.shape[1])).unsqueeze(2)
-                patch_pos = torch.reshape(z_list_2[idx],(neg_examples,views_1.shape[1])).unsqueeze(2)
-                patch_neg = torch.swapaxes(torch.reshape(z_list_2[patch_neg_idx],(neg_examples,views_1.shape[1])).unsqueeze(2),0,2)
-                
-                # neg_idx = np.random.choice(sample_size**2,(sample_size**2,neg_examples))
-                
-                patch_stack = patch.repeat(1,1,neg_examples+1)
-                neg_patch_stack = torch.cat((patch_pos,patch_neg.repeat(neg_examples,1,1)),dim=2)
-                
-                sim = torch.nn.CosineSimilarity(dim=1, eps=1e-08)(patch_stack,neg_patch_stack)
-                #sim = (sim + 1)/2 # normalized to [0,1]
-                #sim = torch.nn.ReLU()(sim)
-                sim = torch.abs(sim)
-                sim[sim>=1] = 1
-                sim = torch.sum(sim,dim = 0)/neg_examples
-                sim[1:] = sim[1:] / self.temperature
-                sim_all += sim
-                target = torch.zeros_like(sim).cuda()
-                target[0] = 1
-                loss += self.loss(sim,target)
-                sim_all.detach().cpu().numpy()
-        return loss / (i+1) / (idx+1), sim_all[0] / (i+1) / (idx+1), sim_all[1:].sum() / neg_examples * self.temperature / (i+1) / (idx+1)
+            neg_patch_stack = torch.cat((z_view1_vec,patch_neg),dim=2)
+            sim = torch.nn.CosineSimilarity(dim=0, eps=1e-08)(patch_stack,neg_patch_stack)
+            sim[:,1:] *= weight
+            #sim = (sim + 1)/2 # normalized to [0,1]
+            #sim = torch.nn.ReLU()(sim)
+            sim = torch.abs(sim)
+            sim[sim>=1] = 1
+            sim = torch.sum(sim,dim = 0)/(h*w)
+            sim[1:] = sim[1:] / self.temperature
+            sim_all += sim
+            target = torch.zeros_like(sim).cuda()
+            target[0] = 1
+            loss += self.loss(sim,target)
+            sim_all.detach().cpu().numpy()
+        return loss / (i+1) / (idx+1), sim_all[0] / (i+1) / (idx+1), sim_all[1:].sum() / self.neg_examples * self.temperature / (i+1) / (idx+1)
