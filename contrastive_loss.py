@@ -11,11 +11,14 @@ class ContrastiveLoss(torch.nn.Module):
         self.neg_examples = neg_examples
    
     def forward(self, views_1, views_2,img):
+        img = img.to('cuda')
         loss = 0
         sim_all = torch.zeros((self.neg_examples + 1)).cuda()
         batch, c, h, w = views_1[0].unsqueeze(0).size()
         height  = np.floor(np.arange(h*w)/w).astype(int)
         width = np.floor(np.arange(h*w)%w).astype(int)
+        max_euc_dist = torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
+        max_rgb_dist = torch.sqrt(torch.tensor([3.]).to('cuda'))
         for i in range(views_1.shape[0]):
             z_view1 = views_1[i].unsqueeze(0)
             z_view2 = views_2[i].unsqueeze(0)
@@ -26,13 +29,9 @@ class ContrastiveLoss(torch.nn.Module):
             neg_idx = np.array([np.random.choice(h,(h*w,self.neg_examples)),np.random.choice(w,(h*w,self.neg_examples))])
             patch_neg = z_view2[:,:,neg_idx[0],neg_idx[1]].squeeze(0)   
 
-            euc_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
-            rgb_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
-            for idx in range(z_view1_vec.shape[1]):
-                euc_dist[idx] = torch.norm(torch.subtract(torch.tensor(np.array([height[idx],width[idx]]).reshape(2,1),dtype=float), torch.tensor(np.array([neg_idx[0,idx,:],neg_idx[1,idx,:]]),dtype=float)).to('cuda'),dim=0)
-                rgb_dist[idx] = torch.norm(torch.subtract(img[0,:,height[idx],width[idx]].reshape([3,1]), img[0,:,neg_idx[0,idx,:],neg_idx[1,idx,:]]),dim=0)
-            euc_dist /= torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
-            rgb_dist /= torch.sqrt(torch.tensor([3.]).to('cuda'))
+            euc_dist = torch.norm(torch.subtract(torch.tensor(np.array([height,width]),dtype=float).unsqueeze(2).to('cuda'), torch.tensor(np.array([neg_idx[0,:,:],neg_idx[1,:,:]]),dtype=float).to('cuda')),dim=0)/max_euc_dist
+            rgb_dist = torch.norm(torch.subtract(img[0,:,height,width].unsqueeze(2), img[0,:,neg_idx[0,:,:],neg_idx[1,:,:]]),dim=0)/max_rgb_dist
+
             weight = euc_dist * self.factor + rgb_dist * (1-self.factor)
             patch_stack = z_view1_vec.repeat(1,1,self.neg_examples+1)
 
