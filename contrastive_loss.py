@@ -29,10 +29,13 @@ class ContrastiveLoss(torch.nn.Module):
             euc_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
             rgb_dist = torch.zeros([h*w,self.neg_examples]).to('cuda')
             for idx in range(z_view1_vec.shape[1]):
-                euc_dist[idx] = torch.norm(torch.subtract(torch.tensor(np.array([height[idx],width[idx]]).reshape(2,1),dtype=float), torch.tensor(np.array([neg_idx[0,idx,:],neg_idx[1,idx,:]]),dtype=float)).to('cuda'))
-                rgb_dist[idx] = torch.norm(torch.subtract(img[0,:,height[idx],width[idx]], img[0,:,neg_idx[0,idx,:],neg_idx[1,idx,:]]))
+                euc_dist[idx] = torch.norm(torch.subtract(torch.tensor(np.array([height[idx],width[idx]]).reshape(2,1),dtype=float), torch.tensor(np.array([neg_idx[0,idx,:],neg_idx[1,idx,:]]),dtype=float)).to('cuda'),dim=0)
+                
+                rgb_dist[idx] = torch.norm(torch.subtract(img[0,:,height[idx],width[idx]].reshape([3,1]), img[0,:,neg_idx[0,idx,:],neg_idx[1,idx,:]]),dim=0)
+            ipdb.set_trace()
             euc_dist /= torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
             rgb_dist /= torch.sqrt(torch.tensor([3.]).to('cuda'))
+            ipdb.set_trace()
             weight = euc_dist * self.factor + rgb_dist * (1-self.factor)
             patch_stack = z_view1_vec.repeat(1,1,self.neg_examples+1)
 
