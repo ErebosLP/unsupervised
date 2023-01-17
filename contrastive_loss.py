@@ -54,6 +54,7 @@ class ContrastiveLoss(torch.nn.Module):
                 #sim = (sim + 1)/2 # normalized to [0,1]
                 #sim = torch.nn.ReLU()(sim)
                 sim = torch.abs(sim)
+                sim[sim>=1] = 1
                 sim = torch.sum(sim,dim = 0)/neg_examples
                 sim[1:] = sim[1:] / self.temperature
                 sim_all += sim

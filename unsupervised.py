@@ -19,16 +19,16 @@ def main():
     numEpochs = 100
     learningRate = 0.001
 
-    numImgs = 10000
+    numImgs = 100000
     numPatches = 256
     batchsize = 1 
     numClasses = 10
     temperature = 1
-    print_freq = int(1000)
+    print_freq = int(25000)
     print_freq_val = int(125)
     encoder = 'resnet50'
     
-    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + 'BCELoss_ABS' 
+    model_name = 'model_DetCo_' + encoder + '_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_lr_0_' + str(learningRate)[-3:] + '_batch_' + str(batchsize) + '_0301_BCELoss_ABS' 
     img_path = '/cache/jhembach/dataset/'
     out_dir = '/cache/jhembach/results/' + model_name
 
@@ -236,7 +236,7 @@ def main():
                                                                 CLASS_NAMES[5]:class_std_all[5],CLASS_NAMES[6]:class_std_all[6],
                                                                 CLASS_NAMES[7]:class_std_all[7],CLASS_NAMES[8]:class_std_all[8],
                                                                 CLASS_NAMES[9]:class_std_all[9],CLASS_NAMES[10]:class_std_all[10]},epoch)   
-        writer.add_scalar('similarity_negative_validation',{'neg_sim_4wheel_human_all':neg_sim_4wheel_human_all,
+        writer.add_scalars('similarity_negative_validation',{'neg_sim_4wheel_human_all':neg_sim_4wheel_human_all,
                                                             'neg_sim_4wheel_2wheel_all':neg_sim_4wheel_2wheel_all,
                                                             'neg_sim_human_2wheel_all':neg_sim_human_2wheel_all},epoch)
 
