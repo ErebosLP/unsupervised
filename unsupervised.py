@@ -18,20 +18,21 @@ def main():
     #Hyperparameter    
     numEpochs = 10
     learningRate = 0.001
-    numImgss = [100,1000]
-    neg_exampless = [100,265,100,265]
-    weight_factors = [0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95] # euc_dist *factor + rgb_dist * (1-factor)
+    numImgs = 10000
+    neg_exampless = [100,200]
+    weight_factors = [0.7,0.75,0.8,0.85] # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
     numClasses = 10
     temperature = 1
-    print_freq = int(1)
-    print_freq_val = int(10)
+    print_freq = int(1000)
+    print_freq_val = int(500)
     encoder = 'resnet50'
-    for config  in range(32):
-        weight_factor = weight_factors[config%8]
-        neg_examples = neg_exampless[int(config/8)]
-        numImgs = numImgss[int(config/16)]
+    for config  in range(8):
+        weight_factor = weight_factors[config%4]
+        neg_examples = neg_exampless[int(config/4)]
+        
         model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_1701_euc_rgb_dist' 
+        print(model_name)
         img_path = '/cache/jhembach/dataset/'
         out_dir = '/cache/jhembach/results/test/' + model_name
 
