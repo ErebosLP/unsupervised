@@ -33,10 +33,10 @@ def main():
         
         model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_1701_euc_rgb_dist' 
         print(model_name)
-        img_path = '/cache/jhembach/dataset/'
-        out_dir = '/cache/jhembach/results/test/' + model_name
+        img_path = '../dataset/leftImg8bit/val/frankfurt/'#'/cache/jhembach/dataset/'
+        out_dir = './'#'/cache/jhembach/results/test/' + model_name
 
-        root_img_val = '/cache/jhembach/Cityscapes_val/'
+        root_img_val = '../dataset/'#'/cache/jhembach/Cityscapes_val/'
         
         start_saving = 0 #when to start saving the max_valid_model
 
@@ -164,88 +164,89 @@ def main():
             
             #Validation
             model.eval()
-            print('start validation epoch: ' + str(epoch))
-            losses_val = np.array([0.0,0.0,0.0,0.0])
-            counter = np.zeros((3,11))
-            instance_sim_all = np.zeros(11)
-            class_sim_all = np.zeros(11)
-            neg_sim_4wheel_human_all = np.zeros(1)
-            neg_sim_4wheel_human_count = 0
-            neg_sim_4wheel_2wheel_all = np.zeros(1)
-            neg_sim_4wheel_2wheel_count = 0
-            neg_sim_human_2wheel_all = np.zeros(1)
-            neg_sim_human_2wheel_count = 0
-            class_std_all = np.zeros(11)
-            for idx, (view_1, view_2, img, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
-                view_1 =view_1.cuda()
-                view_2 =view_2.cuda()
-                
-                q,k = model(im_q=view_1, im_k=view_2)
-                view_1_jig ,view_1_perm = aug._jigsaw(view_1)
-                view_2_jig ,view_2_perm = aug._jigsaw(view_2)
-                q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
-                q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
-                k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
+            with torch.no_grad():
+                print('start validation epoch: ' + str(epoch))
+                losses_val = np.array([0.0,0.0,0.0,0.0])
+                counter = np.zeros((3,11))
+                instance_sim_all = np.zeros(11)
+                class_sim_all = np.zeros(11)
+                neg_sim_4wheel_human_all = np.zeros(1)
+                neg_sim_4wheel_human_count = 0
+                neg_sim_4wheel_2wheel_all = np.zeros(1)
+                neg_sim_4wheel_2wheel_count = 0
+                neg_sim_human_2wheel_all = np.zeros(1)
+                neg_sim_human_2wheel_count = 0
+                class_std_all = np.zeros(11)
+                for idx, (view_1, view_2, img, target) in enumerate(metric_logger.log_every(val_loader,print_freq_val,header)):
+                    view_1 =view_1.cuda()
+                    view_2 =view_2.cuda()
+                    
+                    q,k = model(im_q=view_1, im_k=view_2)
+                    view_1_jig ,view_1_perm = aug._jigsaw(view_1)
+                    view_2_jig ,view_2_perm = aug._jigsaw(view_2)
+                    q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
+                    q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
+                    k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
 
-                batch_loss_g2g_val, pos_g2g_val, neg_g2g_val = loss(q,k,img)
-                batch_loss_l2l_val, pos_l2l_val, neg_l2l_val = loss(q_jig,k_jig,img)
-                batch_loss_g2l_val, pos_g2l_val, neg_g2l_val = loss(q_jig,k,img)
-                batch_loss_val = batch_loss_g2g_val +batch_loss_l2l_val +  batch_loss_g2l_val
-                metric_logger.update(loss=batch_loss_val)
-                
+                    batch_loss_g2g_val, pos_g2g_val, neg_g2g_val = loss(q,k,img)
+                    batch_loss_l2l_val, pos_l2l_val, neg_l2l_val = loss(q_jig,k_jig,img)
+                    batch_loss_g2l_val, pos_g2l_val, neg_g2l_val = loss(q_jig,k,img)
+                    batch_loss_val = batch_loss_g2g_val +batch_loss_l2l_val +  batch_loss_g2l_val
+                    metric_logger.update(loss=batch_loss_val)
+                    
 
-                losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
-                instance_sim, class_sim, neg_sim_4wheel_human,neg_sim_4wheel_2wheel,neg_sim_human_2wheel,class_std = val_loss(q,k, target)
-                instance_sim_all += instance_sim.detach().cpu().numpy()
-                class_sim_all += class_sim.detach().cpu().numpy()
-                if (neg_sim_4wheel_human > 0):
-                    neg_sim_4wheel_human_all += neg_sim_4wheel_human.detach().cpu().numpy()
-                    neg_sim_4wheel_human_count += 1
-                if (neg_sim_4wheel_2wheel > 0):
-                    neg_sim_4wheel_2wheel_all += neg_sim_4wheel_2wheel.detach().cpu().numpy()
-                    neg_sim_4wheel_2wheel_count += 1
-                if (neg_sim_human_2wheel > 0):
-                    neg_sim_human_2wheel_all += neg_sim_human_2wheel.detach().cpu().numpy()
-                    neg_sim_human_2wheel_count += 1
+                    losses_val += [batch_loss_val.detach().cpu().numpy() ,batch_loss_g2g_val.detach().cpu().numpy(),batch_loss_l2l_val.detach().cpu().numpy(),batch_loss_g2l_val.detach().cpu().numpy()]
+                    instance_sim, class_sim, neg_sim_4wheel_human,neg_sim_4wheel_2wheel,neg_sim_human_2wheel,class_std = val_loss(q,k, target)
+                    instance_sim_all += instance_sim.detach().cpu().numpy()
+                    class_sim_all += class_sim.detach().cpu().numpy()
+                    if (neg_sim_4wheel_human > 0):
+                        neg_sim_4wheel_human_all += neg_sim_4wheel_human.detach().cpu().numpy()
+                        neg_sim_4wheel_human_count += 1
+                    if (neg_sim_4wheel_2wheel > 0):
+                        neg_sim_4wheel_2wheel_all += neg_sim_4wheel_2wheel.detach().cpu().numpy()
+                        neg_sim_4wheel_2wheel_count += 1
+                    if (neg_sim_human_2wheel > 0):
+                        neg_sim_human_2wheel_all += neg_sim_human_2wheel.detach().cpu().numpy()
+                        neg_sim_human_2wheel_count += 1
 
 
 
-                class_std_all += class_std.detach().cpu().numpy()
-                counter += [instance_sim.detach().cpu().numpy()!=0,class_sim.detach().cpu().numpy()!=0,class_std.detach().cpu().numpy()!=0]
-            instance_sim_all /= counter[0,:]
-            class_std_all /= counter[2,:]
-            class_sim_all = np.nan_to_num(class_sim_all / counter[1,:])
-            neg_sim_4wheel_human_all /=neg_sim_4wheel_human_count
-            neg_sim_4wheel_2wheel_all /=neg_sim_4wheel_2wheel_count
-            neg_sim_human_2wheel_all /=neg_sim_human_2wheel_count
-            losses_val /= idx+1
-            CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
-            writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
-            writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
+                    class_std_all += class_std.detach().cpu().numpy()
+                    counter += [instance_sim.detach().cpu().numpy()!=0,class_sim.detach().cpu().numpy()!=0,class_std.detach().cpu().numpy()!=0]
+                instance_sim_all /= counter[0,:]
+                class_std_all /= counter[2,:]
+                class_sim_all = np.nan_to_num(class_sim_all / counter[1,:])
+                neg_sim_4wheel_human_all /=neg_sim_4wheel_human_count
+                neg_sim_4wheel_2wheel_all /=neg_sim_4wheel_2wheel_count
+                neg_sim_human_2wheel_all /=neg_sim_human_2wheel_count
+                losses_val /= idx+1
+                CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
+                writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
+                writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
 
-            writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim_all[1],CLASS_NAMES[2]:instance_sim_all[2],
-                                                                    CLASS_NAMES[3]:instance_sim_all[3],CLASS_NAMES[4]:instance_sim_all[4],
-                                                                    CLASS_NAMES[5]:instance_sim_all[5],CLASS_NAMES[6]:instance_sim_all[6],
-                                                                    CLASS_NAMES[7]:instance_sim_all[7],CLASS_NAMES[8]:instance_sim_all[8],
-                                                                    CLASS_NAMES[9]:instance_sim_all[9],CLASS_NAMES[10]:instance_sim_all[10]},epoch)
+                writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim_all[1],CLASS_NAMES[2]:instance_sim_all[2],
+                                                                        CLASS_NAMES[3]:instance_sim_all[3],CLASS_NAMES[4]:instance_sim_all[4],
+                                                                        CLASS_NAMES[5]:instance_sim_all[5],CLASS_NAMES[6]:instance_sim_all[6],
+                                                                        CLASS_NAMES[7]:instance_sim_all[7],CLASS_NAMES[8]:instance_sim_all[8],
+                                                                        CLASS_NAMES[9]:instance_sim_all[9],CLASS_NAMES[10]:instance_sim_all[10]},epoch)
 
-            writer.add_scalars('similarity_class_validation', {     CLASS_NAMES[1]:class_sim_all[1],CLASS_NAMES[2]:class_sim_all[2],
-                                                                    CLASS_NAMES[3]:class_sim_all[3],CLASS_NAMES[4]:class_sim_all[4],
-                                                                    CLASS_NAMES[5]:class_sim_all[5],CLASS_NAMES[6]:class_sim_all[6],
-                                                                    CLASS_NAMES[7]:class_sim_all[7],CLASS_NAMES[8]:class_sim_all[8],
-                                                                    CLASS_NAMES[9]:class_sim_all[9],CLASS_NAMES[10]:class_sim_all[10]},epoch)   
+                writer.add_scalars('similarity_class_validation', {     CLASS_NAMES[1]:class_sim_all[1],CLASS_NAMES[2]:class_sim_all[2],
+                                                                        CLASS_NAMES[3]:class_sim_all[3],CLASS_NAMES[4]:class_sim_all[4],
+                                                                        CLASS_NAMES[5]:class_sim_all[5],CLASS_NAMES[6]:class_sim_all[6],
+                                                                        CLASS_NAMES[7]:class_sim_all[7],CLASS_NAMES[8]:class_sim_all[8],
+                                                                        CLASS_NAMES[9]:class_sim_all[9],CLASS_NAMES[10]:class_sim_all[10]},epoch)   
 
-            writer.add_scalars('similarity_std_validation', {  CLASS_NAMES[1]:class_std_all[1],CLASS_NAMES[2]:class_std_all[2],
-                                                                    CLASS_NAMES[3]:class_std_all[3],CLASS_NAMES[4]:class_std_all[4],
-                                                                    CLASS_NAMES[5]:class_std_all[5],CLASS_NAMES[6]:class_std_all[6],
-                                                                    CLASS_NAMES[7]:class_std_all[7],CLASS_NAMES[8]:class_std_all[8],
-                                                                    CLASS_NAMES[9]:class_std_all[9],CLASS_NAMES[10]:class_std_all[10]},epoch)   
-            writer.add_scalars('similarity_negative_validation',{'neg_sim_4wheel_human_all':neg_sim_4wheel_human_all,
-                                                                'neg_sim_4wheel_2wheel_all':neg_sim_4wheel_2wheel_all,
-                                                                'neg_sim_human_2wheel_all':neg_sim_human_2wheel_all},epoch)
+                writer.add_scalars('similarity_std_validation', {  CLASS_NAMES[1]:class_std_all[1],CLASS_NAMES[2]:class_std_all[2],
+                                                                        CLASS_NAMES[3]:class_std_all[3],CLASS_NAMES[4]:class_std_all[4],
+                                                                        CLASS_NAMES[5]:class_std_all[5],CLASS_NAMES[6]:class_std_all[6],
+                                                                        CLASS_NAMES[7]:class_std_all[7],CLASS_NAMES[8]:class_std_all[8],
+                                                                        CLASS_NAMES[9]:class_std_all[9],CLASS_NAMES[10]:class_std_all[10]},epoch)   
+                writer.add_scalars('similarity_negative_validation',{'neg_sim_4wheel_human_all':neg_sim_4wheel_human_all,
+                                                                    'neg_sim_4wheel_2wheel_all':neg_sim_4wheel_2wheel_all,
+                                                                    'neg_sim_human_2wheel_all':neg_sim_human_2wheel_all},epoch)
 
-            print('pos_g2g_val',pos_g2g_val,'pos_l2l_val',pos_l2l_val,'pos_g2l_val',pos_g2l_val)
-            print('neg_g2g_val',neg_g2g_val,'neg_l2l_val',neg_l2l_val,'neg_g2l_val',neg_g2l_val)           
+                print('pos_g2g_val',pos_g2g_val,'pos_l2l_val',pos_l2l_val,'pos_g2l_val',pos_g2l_val)
+                print('neg_g2g_val',neg_g2g_val,'neg_l2l_val',neg_l2l_val,'neg_g2l_val',neg_g2l_val)           
 
             time_estimate = (time.time() - t1) / (epoch + 1) * (numEpochs - (epoch + 1))
             print(f'Estimated time until finished: Days: {int(time_estimate/(24*3600)) }, Hours: {int(time_estimate/3600) % 24}, Minutes: {int(time_estimate/60) % 60}, Seconds: {int(time_estimate % 60)}')
