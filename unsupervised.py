@@ -16,27 +16,26 @@ import instance_loss
 
 def main():
     #Hyperparameter    
-    numEpochs = 10
+    numEpochss = [1000,1000]
     learningRate = 0.001
-    numImgs = 10000
+    numImgs = 100
     neg_exampless = [100,200]
-    weight_factors = [0.7,0.75,0.8,0.85] # euc_dist *factor + rgb_dist * (1-factor)
+    weight_factor = .1 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
-    numClasses = 10
+    numClasses = 16
     temperature = 1
-    print_freq = int(1000)
+    print_freq = int(100)
     print_freq_val = int(500)
     encoder = 'resnet50'
-    for config  in range(8):
-        weight_factor = weight_factors[config%4]
-        neg_examples = neg_exampless[int(config/4)]
-        
-        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_1701_euc_rgb_dist' 
+    for config  in range(4):
+        numEpochs = numEpochss[config]
+        neg_examples = neg_exampless[config]
+        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_overfit' 
         print(model_name)
-        img_path = '../dataset/leftImg8bit/val/frankfurt/'#'/cache/jhembach/dataset/'
-        out_dir = './'#'/cache/jhembach/results/test/' + model_name
+        img_path ='/cache/jhembach/dataset/'
+        out_dir = '/cache/jhembach/results/test_grid_2101/' + model_name
 
-        root_img_val = '../dataset/'#'/cache/jhembach/Cityscapes_val/'
+        root_img_val = '/cache/jhembach/Cityscapes_val/'
         
         start_saving = 0 #when to start saving the max_valid_model
 
@@ -118,9 +117,9 @@ def main():
                 batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k, img)
             
                 
-                # batch_loss_g2g /= batchsize
-                # batch_loss_l2l /= batchsize
-                # batch_loss_g2l /= batchsize
+                batch_loss_g2g /= batchsize
+                batch_loss_l2l /= batchsize
+                batch_loss_g2l /= batchsize
                 
                 batch_loss = batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
 
@@ -131,7 +130,7 @@ def main():
                 metric_logger.update(loss=batch_loss)
                 metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
-                losses += [batch_loss.detach().cpu().numpy() ,batch_loss_g2g.detach().cpu().numpy(),batch_loss_l2l.detach().cpu().numpy(),batch_loss_g2l.detach().cpu().numpy()]
+                losses += [batch_loss.detach().cpu().numpy(),batch_loss_g2g.detach().cpu().numpy(),batch_loss_l2l.detach().cpu().numpy(),batch_loss_g2l.detach().cpu().numpy()]
             # update the learning rate
             scheduler.step()  
             losses /= idx+1
@@ -222,7 +221,7 @@ def main():
                 losses_val /= idx+1
                 CLASS_NAMES = ['unlabeled', 'person',  'rider',  'car',  'truck',  'bus',  'caravan',  'trailer',  'train',  'motorcycle',  'bicycle']
                 writer.add_scalars('Loss_validation',  {'batch loss':losses_val[0],'global loss':losses_val[1],'local loss':losses_val[2] ,'global2local loss':losses_val[3]}, epoch)
-                writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
+                writer.add_scalars('similarity_validation',  {'pos_g2g':pos_g2g_val,'neg_g2g':neg_g2g_val,'pos_l2l':pos_l2l_val,'pos_g2l':pos_g2l_val ,'neg_g2g':neg_g2g_val,'neg_l2l':neg_l2l_val,'neg_g2l':neg_g2l_val }, epoch)
 
                 writer.add_scalars('similarity_instance_validation', {  CLASS_NAMES[1]:instance_sim_all[1],CLASS_NAMES[2]:instance_sim_all[2],
                                                                         CLASS_NAMES[3]:instance_sim_all[3],CLASS_NAMES[4]:instance_sim_all[4],
