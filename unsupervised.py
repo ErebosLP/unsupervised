@@ -30,7 +30,7 @@ def main():
     for config  in range(4):
         numEpochs = numEpochss[config]
         neg_examples = neg_exampless[config]
-        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_overfit' 
+        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_flipped' 
         print(model_name)
         img_path ='/cache/jhembach/dataset/'
         out_dir = '/cache/jhembach/results/test_grid_2101/' + model_name
@@ -100,7 +100,10 @@ def main():
             print('start train epoch: ' + str(epoch))
             losses = np.array([0.0,0.0,0.0,0.0])
             for idx, (view_1,view_2, img ) in enumerate(metric_logger.log_every(train_loader,print_freq,header)):
-                
+                flipped = False
+                if torch.rand(1) < 0.5:
+                    view_1 = transforms.RandomHorizontalFlip(1)(view_1)
+                    flipped = True
                 view_1 =view_1.cuda()
                 view_2 =view_2.cuda()
                 
@@ -111,7 +114,9 @@ def main():
                 q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
                 q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
                 k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
-
+                if flipped:
+                    q = transforms.RandomHorizontalFlip(1)(q)
+                    q_jig = transforms.RandomHorizontalFlip(1)(q_jig)
                 batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k, img)
                 batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig, img)
                 batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k, img)
