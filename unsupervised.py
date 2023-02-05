@@ -16,7 +16,7 @@ import instance_loss
 
 def main():
     #Hyperparameter    
-    numEpochss = [1000,1000]
+    numEpochss = [500,500]
     learningRate = 0.001
     numImgs = 100
     neg_exampless = [100,200]
@@ -26,6 +26,7 @@ def main():
     temperature = 1
     print_freq = int(100)
     print_freq_val = int(500)
+    save_freq = 10
     encoder = 'resnet50'
     for config  in range(4):
         numEpochs = numEpochss[config]
@@ -146,7 +147,7 @@ def main():
             print('pos_g2g',pos_g2g,'pos_l2l',pos_l2l,'pos_g2l',pos_g2l)
             print('neg_g2g',neg_g2g,'neg_l2l',neg_l2l,'neg_g2l',neg_g2l)
     
-            if epoch % 5 == 0:
+            if epoch % save_freq == 0:
                 torch.save(model.state_dict(), out_dir + '/model/checkpoint/%08d_model.pth' % (epoch))
                 torch.save({'epoch': epoch,
                     'model_state_dict': model.state_dict(),
