@@ -16,10 +16,11 @@ import instance_loss
 
 def main():
     #Hyperparameter    
-    numEpochss = [500,500]
+    numEpochss = [100,100]
     learningRate = 0.001
     numImgs = 100
-    neg_exampless = [100,200]
+    neg_exampless = [100,100]
+    p_flips = [0,0.5]
     weight_factor = .1 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
     numClasses = 16
@@ -28,10 +29,15 @@ def main():
     print_freq_val = int(500)
     save_freq = 10
     encoder = 'resnet50'
-    for config  in range(4):
+    for config  in range(2):
+        p_flip = p_flips[config]
         numEpochs = numEpochss[config]
         neg_examples = neg_exampless[config]
-        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_flipped' 
+        if p_flip  == 0:
+            model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_just_g2l' 
+        else:
+            model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_flipped_just_g2l' 
+
         print(model_name)
         img_path ='/cache/jhembach/dataset/'
         out_dir = '/cache/jhembach/results/test_grid_2101/' + model_name
@@ -99,10 +105,10 @@ def main():
             metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
             header = 'Epoch: [{}]'.format(epoch)
             print('start train epoch: ' + str(epoch))
-            losses = np.array([0.0,0.0,0.0,0.0])
+            losses = np.array([0.0,0.0])
             for idx, (view_1,view_2, img ) in enumerate(metric_logger.log_every(train_loader,print_freq,header)):
                 flipped = False
-                if torch.rand(1) < 0.5:
+                if torch.rand(1) < p_flip:
                     view_1 = transforms.RandomHorizontalFlip(1)(view_1)
                     flipped = True
                 view_1 =view_1.cuda()
@@ -118,16 +124,16 @@ def main():
                 if flipped:
                     q = transforms.RandomHorizontalFlip(1)(q)
                     q_jig = transforms.RandomHorizontalFlip(1)(q_jig)
-                batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k, img)
-                batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig, img)
+                # batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k, img)
+                # batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig, img)
                 batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k, img)
             
                 
-                batch_loss_g2g /= batchsize
-                batch_loss_l2l /= batchsize
+                # batch_loss_g2g /= batchsize
+                # batch_loss_l2l /= batchsize
                 batch_loss_g2l /= batchsize
                 
-                batch_loss = batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
+                batch_loss = batch_loss_g2l #batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
 
                 optimizer.zero_grad()
                 batch_loss.backward()
@@ -136,16 +142,20 @@ def main():
                 metric_logger.update(loss=batch_loss)
                 metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
-                losses += [batch_loss.detach().cpu().numpy(),batch_loss_g2g.detach().cpu().numpy(),batch_loss_l2l.detach().cpu().numpy(),batch_loss_g2l.detach().cpu().numpy()]
+                #losses += [batch_loss.detach().cpu().numpy(),batch_loss_g2g.detach().cpu().numpy(),batch_loss_l2l.detach().cpu().numpy(),batch_loss_g2l.detach().cpu().numpy()]
+                losses += [batch_loss.detach().cpu().numpy(),batch_loss_g2l.detach().cpu().numpy()]
             # update the learning rate
             scheduler.step()  
             losses /= idx+1
-            writer.add_scalars('Loss',  {'batch loss':losses[0],'global loss':losses[1],'local loss':losses[2] ,'global2local loss':losses[3]}, epoch)
-            writer.add_scalars('similarity',  {'pos_g2g':pos_g2g,'pos_l2l':pos_l2l,'pos_g2l':pos_g2l ,'neg_g2g':neg_g2g,'neg_l2l':neg_l2l,'neg_g2l':neg_g2l }, epoch)
+            writer.add_scalars('Loss',  {'batch loss':losses[0],'global2local loss':losses[1]},epoch) #,'global loss':losses[1],'local loss':losses[2] }, epoch)
+            #writer.add_scalars('similarity',  {'pos_g2g':pos_g2g,'pos_l2l':pos_l2l,'pos_g2l':pos_g2l ,'neg_g2g':neg_g2g,'neg_l2l':neg_l2l,'neg_g2l':neg_g2l }, epoch)
+            writer.add_scalars('similarity',  {'pos_g2l':pos_g2l ,'neg_g2l':neg_g2l }, epoch)
             
 
-            print('pos_g2g',pos_g2g,'pos_l2l',pos_l2l,'pos_g2l',pos_g2l)
-            print('neg_g2g',neg_g2g,'neg_l2l',neg_l2l,'neg_g2l',neg_g2l)
+            # print('pos_g2g',pos_g2g,'pos_l2l',pos_l2l,'pos_g2l',pos_g2l)
+            # print('neg_g2g',neg_g2g,'neg_l2l',neg_l2l,'neg_g2l',neg_g2l)
+            print('pos_g2l',pos_g2l)
+            print('neg_g2l',neg_g2l)
     
             if epoch % save_freq == 0:
                 torch.save(model.state_dict(), out_dir + '/model/checkpoint/%08d_model.pth' % (epoch))
