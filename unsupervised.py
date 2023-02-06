@@ -16,12 +16,12 @@ import instance_loss
 
 def main():
     #Hyperparameter    
-    numEpochss = [100,100]
+    numEpochs = 100
     learningRate = 0.001
-    numImgs = 100
-    neg_exampless = [100,100]
-    p_flips = [0,0.5]
-    weight_factor = .1 # euc_dist *factor + rgb_dist * (1-factor)
+    numImgs = 1
+    neg_examples = 100
+    p_flips = [0,0.5,1]
+    weight_factors = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1] # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
     numClasses = 16
     temperature = 1
@@ -29,10 +29,9 @@ def main():
     print_freq_val = int(500)
     save_freq = 10
     encoder = 'resnet50'
-    for config  in range(2):
-        p_flip = p_flips[config]
-        numEpochs = numEpochss[config]
-        neg_examples = neg_exampless[config]
+    for config  in range(33):
+        p_flip = p_flips[int(config/11)]
+        weight_factor = weight_factors[int(config/3)]
         if p_flip  == 0:
             model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_just_g2l' 
         else:
