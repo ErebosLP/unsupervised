@@ -14,6 +14,17 @@ import utils
 import augmentation as aug
 import instance_loss
 
+def randomCrop(img,size=128):
+    _,_,h,w = img.shape
+    pos = [random.uniform(size/2,h - size/2), random.uniform(size/2,w - size/2)]
+    img = img[:,:,pos[0]-size/2:pos[0]+size/2,pos[1]-size/2:pos[1]+size/2] 
+    
+    return img, pos
+
+def CropAtPos(img, pos, size=128):
+    img = img[:,:,pos[0]-size/2:pos[0]+size/2,pos[1]-size/2:pos[1]+size/2] 
+    return img
+
 def main():
     #Hyperparameter    
     numEpochs = 100
@@ -107,16 +118,24 @@ def main():
                 if torch.rand(1) < p_flip:
                     view_1 = transforms.RandomHorizontalFlip(1)(view_1)
                     flipped = True
+                
                 view_1 =view_1.cuda()
                 view_2 =view_2.cuda()
-                
+                view_1 , crop_pos= randomCrop(view_1)
+
                 q,k = model(im_q=view_1, im_k=view_2)
+                k = CropAtPos(k,crop_pos)
                 
                 view_1_jig ,view_1_perm = aug._jigsaw(view_1)
                 view_2_jig ,view_2_perm = aug._jigsaw(view_2)
+                
                 q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
+                
                 q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
                 k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
+                
+                k_jig = CropAtPos(k_jig,crop_pos)
+                
                 if flipped:
                     q = transforms.RandomHorizontalFlip(1)(q)
                     q_jig = transforms.RandomHorizontalFlip(1)(q_jig)
