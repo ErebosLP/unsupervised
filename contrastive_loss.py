@@ -38,9 +38,9 @@ class ContrastiveLoss(torch.nn.Module):
             neg_patch_stack = torch.cat((z_view1_vec,patch_neg),dim=2)
             sim = torch.nn.CosineSimilarity(dim=0, eps=1e-08)(patch_stack,neg_patch_stack)
             sim[:,1:] *= weight
-            sim = (sim + 1)/2 # normalized to [0,1]
+            # sim = (sim + 1)/2 # normalized to [0,1]
             #sim = torch.nn.ReLU()(sim)
-            #sim = torch.abs(sim)
+            sim = torch.abs(sim)
             sim[sim>1] = 1
             sim[sim<0] = 0
             sim = torch.sum(sim,dim = 0)/(h*w)

@@ -27,19 +27,16 @@ def main():
     temperature = 1
     print_freq = int(100)
     print_freq_val = int(500)
-    save_freq = 10
+    save_freq = 100
     encoder = 'resnet50'
     for config  in range(33):
         p_flip = p_flips[int(config/11)]
-        weight_factor = weight_factors[int(config/3)]
-        if p_flip  == 0:
-            model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_just_g2l' 
-        else:
-            model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) + '_2801_euc_rgb_dist_flipped_just_g2l' 
-
+        weight_factor = weight_factors[config%11]
+        
+        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) + '_2801_euc_rgb_dist_just_g2l_abs' 
         print(model_name)
         img_path ='/cache/jhembach/dataset/'
-        out_dir = '/cache/jhembach/results/test_grid_2101/' + model_name
+        out_dir = '/cache/jhembach/results/test_one_img_abs/' + model_name
 
         root_img_val = '/cache/jhembach/Cityscapes_val/'
         
