@@ -16,13 +16,12 @@ import instance_loss
 
 def randomCrop(img,size=128):
     _,_,h,w = img.shape
-    pos = [random.uniform(size/2,h - size/2), random.uniform(size/2,w - size/2)]
-    img = img[:,:,pos[0]-size/2:pos[0]+size/2,pos[1]-size/2:pos[1]+size/2] 
-    
+    pos = [int(random.uniform(size/2,h - size/2)),int(random.uniform(size/2,w - size/2))]
+    img = img[:,:,int(pos[0]-size/2):int(pos[0]+size/2),int(pos[1]-size/2):int(pos[1]+size/2)]
     return img, pos
 
 def CropAtPos(img, pos, size=128):
-    img = img[:,:,pos[0]-size/2:pos[0]+size/2,pos[1]-size/2:pos[1]+size/2] 
+    img = img[:,:,int(pos[0]-size/2):int(pos[0]+size/2),int(pos[1]-size/2):int(pos[1]+size/2)]
     return img
 
 def main():
@@ -36,6 +35,8 @@ def main():
     batchsize = 1 
     numClasses = 16
     temperature = 1
+    p_crop = 0.5
+    crop_size = [64,128]
     print_freq = int(100)
     print_freq_val = int(500)
     save_freq = 100
@@ -44,10 +45,10 @@ def main():
         p_flip = p_flips[int(config/11)]
         weight_factor = weight_factors[config%11]
         
-        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) + '_2801_euc_rgb_dist_just_g2l_abs' 
+        model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) + '_2801_euc_rgb_dist_just_g2l_crop' 
         print(model_name)
         img_path ='/cache/jhembach/dataset/'
-        out_dir = '/cache/jhembach/results/test_one_img_abs/' + model_name
+        out_dir = '/cache/jhembach/results/test_crop/' + model_name
 
         root_img_val = '/cache/jhembach/Cityscapes_val/'
         
@@ -121,10 +122,14 @@ def main():
                 
                 view_1 =view_1.cuda()
                 view_2 =view_2.cuda()
-                view_1 , crop_pos= randomCrop(view_1)
+                croped = False
+                if torch.rand(1) < p_crop:
+                    view_1 , crop_pos= randomCrop(view_1,crop_size)
+                    croped = True
 
                 q,k = model(im_q=view_1, im_k=view_2)
-                k = CropAtPos(k,crop_pos)
+                if croped:    
+                    k = CropAtPos(k,crop_pos)
                 
                 view_1_jig ,view_1_perm = aug._jigsaw(view_1)
                 view_2_jig ,view_2_perm = aug._jigsaw(view_2)
@@ -134,7 +139,8 @@ def main():
                 q_jig = aug._jigsaw_backwards(q_jig,view_1_perm)
                 k_jig = aug._jigsaw_backwards(k_jig,view_2_perm)
                 
-                k_jig = CropAtPos(k_jig,crop_pos)
+                if croped:
+                    k_jig = CropAtPos(k_jig,crop_pos,crop_size)
                 
                 if flipped:
                     q = transforms.RandomHorizontalFlip(1)(q)
