@@ -17,7 +17,7 @@ class ContrastiveLoss(torch.nn.Module):
         batch, c, h, w = views_1[0].unsqueeze(0).size()
         height  = np.floor(np.arange(h*w)/w).astype(int)
         width = np.floor(np.arange(h*w)%w).astype(int)
-        max_euc_dist = torch.norm(torch.tensor([h-1,w-1],dtype=float).to('cuda'))
+        max_euc_dist = torch.norm(torch.tensor([256,256],dtype=float).to('cuda'))
         max_rgb_dist = torch.sqrt(torch.tensor([3.]).to('cuda'))
         for i in range(views_1.shape[0]):
             z_view1 = views_1[i].unsqueeze(0)
