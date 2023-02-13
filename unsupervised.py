@@ -47,7 +47,7 @@ def main():
             p_flip = p_flips[int(config/11)]
             weight_factor = weight_factors[config%11]
             
-            model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) + '_2801_euc_rgb_dist_just_g2l_crop' 
+            model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) +'_crop_size_' +str(crop_size) + '_2801_euc_rgb_dist_just_g2l_crop' 
             print(model_name)
             img_path ='/cache/jhembach/dataset/'
             out_dir = '/cache/jhembach/results/test_crop/' + model_name
@@ -131,7 +131,7 @@ def main():
 
                     q,k = model(im_q=view_1, im_k=view_2)
                     if croped:    
-                        k = CropAtPos(k,crop_pos)
+                        k = CropAtPos(k,crop_pos,crop_size)
                     
                     view_1_jig ,view_1_perm = aug._jigsaw(view_1)
                     view_2_jig ,view_2_perm = aug._jigsaw(view_2)
