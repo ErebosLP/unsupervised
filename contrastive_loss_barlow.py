@@ -11,6 +11,7 @@ class ContrastiveLoss(torch.nn.Module):
         self.examples = examples
    
     def forward(self, views_1, views_2,img):
+        torch.cuda.empty_cache()
         img = img.to('cuda')
         loss = 0
         pos_corr = 0
@@ -25,6 +26,7 @@ class ContrastiveLoss(torch.nn.Module):
         view_1_norm = torch.nn.functional.normalize(views_1,p=2,dim=1)
         view_2_norm = torch.nn.functional.normalize(views_2,p=2,dim=1)
         for i in range(views_1.shape[0]):
+            
             z_view1 = view_1_norm[i].unsqueeze(0)
             z_view2 = view_2_norm[i].unsqueeze(0)
             ########################################################################################################################################################################

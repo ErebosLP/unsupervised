@@ -29,24 +29,24 @@ def main():
     numEpochs = 100
     learningRate = 0.001
     numImgs = 1000
-    neg_examples = 100*100
-    p_flip = 0.5
+    neg_examples = 150 **2
+    p_flip = 0
     weight_factor = .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
     numClasses = 16
     temperature = 1
-    p_crop = 0.5
+    p_crop = 0
     crop_size = 128
     print_freq = int(100)
     print_freq_val = int(500)
     save_freq = 100
     encoder = 'resnet50'            
-    model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) +'_crop_size_' +str(crop_size) + '_1302_euc_rgb_dist_just_g2l_crop' 
+    model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_examples_' + str(neg_examples) + '_barlow_1707' 
     print(model_name)
-    img_path ='../dataset/bonn_dump' # '/cache/jhembach/dataset/'
-    out_dir = './test/'#'/cache/jhembach/results/test_crop_1302/' + model_name
+    img_path = '/cache/jhembach/dataset/'
+    out_dir = '/cache/jhembach/results/test_crop_1302/' + model_name
 
-    root_img_val ='../dataset/'  # '/cache/jhembach/Cityscapes_val/'
+    root_img_val = '/cache/jhembach/Cityscapes_val/'
     
     start_saving = 0 #when to start saving the max_valid_model
 
