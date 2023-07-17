@@ -28,20 +28,20 @@ def main():
     #Hyperparameter    
     numEpochs = 100
     learningRate = 0.001
-    numImgs = 1000
+    numImgs = 10000
     neg_examples = 100
-    p_flip = 0.5
-    weight_factor = .9 # euc_dist *factor + rgb_dist * (1-factor)
-    batchsize = 1 
+    p_flip = 0
+    weight_factor = .1 # euc_dist *factor + rgb_dist * (1-factor)
+    batchsize = 4 
     numClasses = 16
     temperature = 1
-    p_crop = 0.5
+    p_crop = 0
     crop_size = 128
     print_freq = int(100)
     print_freq_val = int(500)
-    save_freq = 100
+    save_freq = 10
     encoder = 'resnet50'            
-    model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) +'_crop_size_' +str(crop_size) + '_1302_euc_rgb_dist_just_g2l_crop' 
+    model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) +'_p_crop_' +str(p_crop) + '_1902_batch4_allgray' 
     print(model_name)
     img_path ='/cache/jhembach/dataset/'
     out_dir = '/cache/jhembach/results/test_crop_1302/' + model_name
@@ -63,7 +63,7 @@ def main():
     model = builder.DetCo(encoder,numClasses)
 
     augmentation = [
-            transforms.RandomGrayscale(p=0.4),
+            transforms.RandomGrayscale(p=1),
             transforms.ColorJitter(0.8, 0.8, 0.8, 0.2),
             aug.GaussianBlur(1,np.random.uniform(0.1,2)),
             transforms.RandomApply([aug.Sobel()],p=0.5),
