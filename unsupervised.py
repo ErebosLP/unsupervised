@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 import random
 import time
 import numpy as np
-import contrastive_loss
+import contrastive_loss_barlow as contrastive_loss
 from torch.utils.tensorboard import SummaryWriter
 import utils
 import augmentation as aug
@@ -29,7 +29,7 @@ def main():
     numEpochs = 100
     learningRate = 0.001
     numImgs = 1000
-    neg_examples = 100
+    neg_examples = 100*100
     p_flip = 0.5
     weight_factor = .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = 1 
@@ -43,10 +43,10 @@ def main():
     encoder = 'resnet50'            
     model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_weight_factor_' + str(weight_factor) + '_neg_examples_' + str(neg_examples) +'_p_flip_' + str(p_flip) +'_crop_size_' +str(crop_size) + '_1302_euc_rgb_dist_just_g2l_crop' 
     print(model_name)
-    img_path ='/cache/jhembach/dataset/'
-    out_dir = '/cache/jhembach/results/test_crop_1302/' + model_name
+    img_path ='../dataset/bonn_dump' # '/cache/jhembach/dataset/'
+    out_dir = './test/'#'/cache/jhembach/results/test_crop_1302/' + model_name
 
-    root_img_val = '/cache/jhembach/Cityscapes_val/'
+    root_img_val ='../dataset/'  # '/cache/jhembach/Cityscapes_val/'
     
     start_saving = 0 #when to start saving the max_valid_model
 
@@ -126,11 +126,11 @@ def main():
             # batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k, img)
             # batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig, img)
             batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig,k, img)
-        
+            
             
             # batch_loss_g2g /= batchsize
             # batch_loss_l2l /= batchsize
-            batch_loss_g2l /= batchsize
+            # batch_loss_g2l /= batchsize
             
             batch_loss = batch_loss_g2l #batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
 
