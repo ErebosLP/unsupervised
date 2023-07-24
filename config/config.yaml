@@ -1,0 +1,32 @@
+path:
+    img_path : '/cache/jhembach/dataset/'
+    out_dir : '/cache/jhembach/results/test_crop_1302/'
+    root_img_val : '/cache/jhembach/Cityscapes_val/'
+
+    img_path_jean : '../dataset/bonn_dump/'
+    out_dir_jean : './test/'
+    root_img_val_jean : '../dataset/'
+
+hyperparameter:
+    numEpochs : 100
+    learningRate : 0.001
+    numImgs : 1000
+    neg_examples : 150
+    p_flip : 0
+    weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
+    batchsize : 1 
+    temperature : 1
+    p_crop : 0
+    crop_size : 128
+
+model:
+    encoder : 'resnet50'
+    numClasses : 16
+    model_name : '_barlow_2407' 
+    
+
+print:
+    print_freq : 100
+    print_freq_val : 500
+    save_freq : 10
+    start_saving : 0 #when to start saving the max_valid_model

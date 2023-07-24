@@ -1,6 +1,7 @@
 import os
 import torch
 import ipdb
+import yaml
 import City_imageloader
 import City_dataloader
 import builder
@@ -25,31 +26,40 @@ def CropAtPos(img, pos, size=128):
     return img
 
 def main():
+    cfg = yaml.safe_load(open("./config/config.yaml"))
+    ipdb.set_trace()
     #Hyperparameter    
-    numEpochs = 100
-    learningRate = 0.001
-    numImgs = 1000
-    neg_examples = 150 **2
-    p_flip = 0
-    weight_factor = .9 # euc_dist *factor + rgb_dist * (1-factor)
-    batchsize = 1 
-    numClasses = 16
-    temperature = 1
-    p_crop = 0
-    crop_size = 128
-    print_freq = int(100)
-    print_freq_val = int(500)
-    save_freq = 10
-    encoder = 'resnet50'            
-    model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_examples_' + str(neg_examples) + '_barlow_1707' 
-    print(model_name)
-    img_path = '/cache/jhembach/dataset/'
-    out_dir = '/cache/jhembach/results/test_crop_1302/' + model_name
-
-    root_img_val = '/cache/jhembach/Cityscapes_val/'
+    numEpochs = cfg['hyperparameter']['numEpochs']
+    learningRate = cfg['hyperparameter']['learningRate']
+    numImgs = cfg['hyperparameter']['numImgs']
+    neg_examples = cfg['hyperparameter']['neg_examples'] **2
+    p_flip = cfg['hyperparameter']['p_flip']
+    weight_factor = cfg['hyperparameter']['weight_factor'] # euc_dist *factor + rgb_dist * (1-factor)
+    batchsize = cfg['hyperparameter'] ['batchsize']
+    numClasses = cfg['model']['numClasses']
+    temperature = cfg['hyperparameter']['temperature']
+    p_crop = cfg['hyperparameter']['p_crop']
+    crop_size = cfg['hyperparameter']['crop_size']
+    print_freq = int(cfg['print']['print_freq'])
+    print_freq_val = int(cfg['print']['print_freq_val'])
+    save_freq = cfg['print']['save_freq']
+    encoder = cfg['model']  ['encoder']          
+    start_saving = cfg['print'] ['start_saving']#when to start saving the max_valid_model
     
-    start_saving = 0 #when to start saving the max_valid_model
-
+    
+    model_name = 'model_numImgs_' + str(numImgs) + '_numEpochs_' + str(numEpochs)+ '_examples_' + str(neg_examples) + cfg['model']  ['model_name'] 
+    
+    print(model_name)
+    # Paths
+    img_path = cfg['path']['img_path']
+    out_dir = cfg['path']['out_dir'] + model_name
+    root_img_val = cfg['path']['root_img_val'] 
+    
+    if True:
+        img_path = cfg['path']['img_path_jean']
+        out_dir = cfg['path']['out_dir_jean'] + model_name
+        root_img_val = cfg['path']['root_img_val_jean']
+    ipdb.set_trace()
     if not os.path.exists(os.path.join(out_dir,'model/checkpoint')):
         os.makedirs(os.path.join(out_dir,'model/checkpoint'))
         
@@ -70,7 +80,7 @@ def main():
             transforms.ToTensor(),
         ]
     Citydataset = City_imageloader.CityscapeDataset(img_path,City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),num_imgs=numImgs)
-    Citydataset_validation = City_dataloader.CityscapeDataset(root_img_val, root_img_val ,  'val',City_dataloader.TwoCropsTransform(transforms.Compose(augmentation)))
+    Citydataset_validation = City_dataloader.CityscapeDataset(root_img_val, root_img_val , 'val',City_dataloader.TwoCropsTransform(transforms.Compose(augmentation)))
     numImgs = Citydataset.__len__()
 
     model.to('cuda')
@@ -83,6 +93,7 @@ def main():
 
     loss = contrastive_loss.ContrastiveLoss(temperature,weight_factor, neg_examples)
     val_loss = instance_loss.InstanceLoss()
+    ipdb.set_trace()
     t1 = time.time()
     for epoch in range(numEpochs):
         torch.cuda.empty_cache()
