@@ -1,6 +1,6 @@
 path:
     img_path : '/cache/jhembach/dataset/'
-    out_dir : '/cache/jhembach/results/test_crop_1302/'
+    out_dir : '/cache/jhembach/results/barlow_loss/'
     root_img_val : '/cache/jhembach/Cityscapes_val/'
 
     img_path_jean : '../dataset/bonn_dump/'
