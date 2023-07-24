@@ -3,11 +3,11 @@ import numpy as np
 import ipdb
 class ContrastiveLoss(torch.nn.Module):
     # from paper the optimal temperature is 0.5
-    def __init__(self, temperature = 2, factor = 0.8,examples = 200*200):
+    def __init__(self, factor_pos, factor_dist = 0.8,examples = 200*200):
         torch.nn.Module.__init__(self)
-        self.temperature = temperature
+        self.factor_pos = factor_pos
         self.loss  = torch.nn.BCELoss()
-        self.factor = factor
+        self.factor_dist = factor_dist
         self.examples = examples
    
     def forward(self, views_1, views_2,img):
@@ -44,9 +44,10 @@ class ContrastiveLoss(torch.nn.Module):
 
             mat =  z_view1_vec.squeeze(2).T @ z_view2_vec.squeeze(2)
             
-            identity_stacked_matrix = torch.eye(self.examples).cuda()
-
-            loss += (mat -identity_stacked_matrix).pow(2).sum()/(self.examples**2)
+            mat[range(mat.shape[0]),range(mat.shape[0])] -=1
+            mat[range(mat.shape[0]),range(mat.shape[0])] *= self.factor_pos
+            
+            loss += (mat).pow(2).sum()/(self.examples**2)
             
             pos_corr +=  torch.diagonal(mat).sum()/self.examples
             neg_corr += (mat.sum() - (pos_corr*self.examples))/(self.examples*(self.examples-1))

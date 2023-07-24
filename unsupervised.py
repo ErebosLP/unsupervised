@@ -27,7 +27,6 @@ def CropAtPos(img, pos, size=128):
 
 def main():
     cfg = yaml.safe_load(open("./config/config.yaml"))
-    ipdb.set_trace()
     #Hyperparameter    
     numEpochs = cfg['hyperparameter']['numEpochs']
     learningRate = cfg['hyperparameter']['learningRate']
@@ -37,7 +36,7 @@ def main():
     weight_factor = cfg['hyperparameter']['weight_factor'] # euc_dist *factor + rgb_dist * (1-factor)
     batchsize = cfg['hyperparameter'] ['batchsize']
     numClasses = cfg['model']['numClasses']
-    temperature = cfg['hyperparameter']['temperature']
+    factor_pos = cfg['hyperparameter']['neg_examples'] **2 -1 #cfg['hyperparameter']['factor_pos']
     p_crop = cfg['hyperparameter']['p_crop']
     crop_size = cfg['hyperparameter']['crop_size']
     print_freq = int(cfg['print']['print_freq'])
@@ -55,11 +54,11 @@ def main():
     out_dir = cfg['path']['out_dir'] + model_name
     root_img_val = cfg['path']['root_img_val'] 
     
-    if True:
+    if False:
         img_path = cfg['path']['img_path_jean']
         out_dir = cfg['path']['out_dir_jean'] + model_name
         root_img_val = cfg['path']['root_img_val_jean']
-    ipdb.set_trace()
+
     if not os.path.exists(os.path.join(out_dir,'model/checkpoint')):
         os.makedirs(os.path.join(out_dir,'model/checkpoint'))
         
@@ -91,9 +90,8 @@ def main():
     optimizer = torch.optim.Adam(params, lr=learningRate, weight_decay=0.0005)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, numEpochs)
 
-    loss = contrastive_loss.ContrastiveLoss(temperature,weight_factor, neg_examples)
+    loss = contrastive_loss.ContrastiveLoss(factor_pos,weight_factor, neg_examples)
     val_loss = instance_loss.InstanceLoss()
-    ipdb.set_trace()
     t1 = time.time()
     for epoch in range(numEpochs):
         torch.cuda.empty_cache()
