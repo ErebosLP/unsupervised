@@ -11,7 +11,7 @@ hyperparameter:
     numEpochs : 100
     learningRate : 0.001
     numImgs : 1000
-    neg_examples : 256
+    neg_examples : 150
     p_flip : 0
     weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize : 1 
