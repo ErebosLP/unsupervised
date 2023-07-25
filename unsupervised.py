@@ -82,7 +82,7 @@ def main():
         out_dir = cfg["path"]["out_dir"] + model_name
         root_img_val = cfg["path"]["root_img_val"]
 
-        if True:
+        if False:
             img_path = cfg["path"]["img_path_jean"]
             out_dir = cfg["path"]["out_dir_jean"] + model_name
             root_img_val = cfg["path"]["root_img_val_jean"]
