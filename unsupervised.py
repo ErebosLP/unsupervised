@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import random
 import time
 import numpy as np
-import contrastive_loss_barlow as contrastive_loss
+import contrastive_loss_vicreg as contrastive_loss
 from torch.utils.tensorboard import SummaryWriter
 import utils
 import augmentation as aug
@@ -82,7 +82,7 @@ def main():
         out_dir = cfg["path"]["out_dir"] + model_name
         root_img_val = cfg["path"]["root_img_val"]
 
-        if False:
+        if True:
             img_path = cfg["path"]["img_path_jean"]
             out_dir = cfg["path"]["out_dir_jean"] + model_name
             root_img_val = cfg["path"]["root_img_val_jean"]
