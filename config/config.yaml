@@ -23,7 +23,7 @@ hyperparameter:
 model:
     encoder : 'resnet50'
     numClasses : 16
-    model_name : '_barlow_2507' 
+    model_name : '_vicreg_2507' 
     
 
 print:
