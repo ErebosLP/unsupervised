@@ -9,11 +9,12 @@ import torchvision.transforms as transforms
 import random
 import time
 import numpy as np
-import contrastive_loss_vicreg as contrastive_loss
+
 from torch.utils.tensorboard import SummaryWriter
 import utils
 import augmentation as aug
 import instance_loss
+import argparse
 
 
 def randomCrop(img, size=128):
@@ -42,7 +43,22 @@ def CropAtPos(img, pos, size=128):
 
 
 def main():
-    cfg = yaml.safe_load(open("./config/config.yaml"))
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config",
+        type=str,
+        nargs="?",
+        help="configfile",
+    )
+    opt = parser.parse_args()
+
+    cfg = yaml.safe_load(open(opt.config))
+    if cfg["loss"]["loss_name"] == "vicreg":
+        import contrastive_loss_vicreg as contrastive_loss
+    elif cfg["loss"]["loss_name"] == "barlow":
+        import contrastive_loss_barlow as contrastive_loss
+    else:
+        raise (ImportError())
     # Hyperparameter
     numEpochs = cfg["hyperparameter"]["numEpochs"]
     learningRate = cfg["hyperparameter"]["learningRate"]
@@ -82,7 +98,7 @@ def main():
         out_dir = cfg["path"]["out_dir"] + model_name
         root_img_val = cfg["path"]["root_img_val"]
 
-        if False:
+        if True:
             img_path = cfg["path"]["img_path_jean"]
             out_dir = cfg["path"]["out_dir_jean"] + model_name
             root_img_val = cfg["path"]["root_img_val_jean"]

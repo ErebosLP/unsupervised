@@ -1,0 +1,35 @@
+path:
+    img_path : '/cache/jhembach/dataset/'
+    out_dir : '/cache/jhembach/results/barlow_loss/'
+    root_img_val : '/cache/jhembach/Cityscapes_val/'
+
+    img_path_jean : '../dataset/bonn_dump/'
+    out_dir_jean : './test/'
+    root_img_val_jean : '../dataset/'
+
+hyperparameter:
+    numEpochs : 100
+    learningRate : 0.001
+    numImgs : 1000
+    neg_examples : 256
+    p_flip : 0
+    weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
+    batchsize : 1
+    acc_batchsize : 8
+    factor_pos : [1] # only for Barlowloss
+    p_crop : 0
+    crop_size : 128
+
+model:
+    encoder : 'resnet50'
+    numClasses : 16
+    model_name : '_barlow_3107' 
+    
+loss:
+    loss_name: "barlow"
+
+print:
+    print_freq : 100
+    print_freq_val : 500
+    save_freq : 25
+    start_saving : 0 #when to start saving the max_valid_model

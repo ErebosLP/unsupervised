@@ -16,7 +16,7 @@ hyperparameter:
     weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize : 1
     acc_batchsize : 8
-    factor_pos : [1]
+    factor_pos : [1] # only for Barlowloss
     p_crop : 0
     crop_size : 128
 
@@ -25,6 +25,8 @@ model:
     numClasses : 16
     model_name : '_vicreg_2507' 
     
+loss:
+    loss_name: "vicreg"
 
 print:
     print_freq : 100
