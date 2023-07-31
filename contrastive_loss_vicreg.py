@@ -12,7 +12,7 @@ class ContrastiveLoss(torch.nn.Module):
         self.factor_dist = factor_dist
         self.examples = examples
         self.lamda = 25
-        self.mu = 25
+        self.mu = 100
         self.nu = 1
 
     def forward(self, views_1, views_2, img):
