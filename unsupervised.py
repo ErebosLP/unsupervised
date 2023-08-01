@@ -98,7 +98,9 @@ def main():
         out_dir = cfg["path"]["out_dir"] + model_name
         root_img_val = cfg["path"]["root_img_val"]
 
-        if False:
+        if (
+            False
+        ):  ##########################################################################################
             img_path = cfg["path"]["img_path_jean"]
             out_dir = cfg["path"]["out_dir_jean"] + model_name
             root_img_val = cfg["path"]["root_img_val_jean"]
@@ -203,17 +205,12 @@ def main():
                 if flipped:
                     q = transforms.RandomHorizontalFlip(1)(q)
                     q_jig = transforms.RandomHorizontalFlip(1)(q_jig)
-                # batch_loss_g2g, pos_g2g, neg_g2g = loss(q,k, img)
-                # batch_loss_l2l, pos_l2l, neg_l2l = loss(q_jig,k_jig, img)
-                batch_loss_g2l, pos_g2l, neg_g2l = loss(q_jig, k, img)
 
-                # batch_loss_g2g /= batchsize
-                # batch_loss_l2l /= batchsize
-                # batch_loss_g2l /= batchsize
-
-                batch_loss = (
-                    batch_loss_g2l  # batch_loss_g2g +batch_loss_l2l +  batch_loss_g2l
+                batch_loss, pos, neg, dist_loss, var_loss, cov_loss = loss(
+                    q_jig, k, img
                 )
+
+                batch_loss = batch_loss
                 batch_loss.backward()
 
                 if ((idx + 1) % acc_batchsize == 0) or (idx + 1 == len(train_loader)):
@@ -223,26 +220,25 @@ def main():
                 metric_logger.update(loss=batch_loss)
                 metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
-                # losses += [batch_loss.detach().cpu().numpy(),batch_loss_g2g.detach().cpu().numpy(),batch_loss_l2l.detach().cpu().numpy(),batch_loss_g2l.detach().cpu().numpy()]
                 losses += [
                     batch_loss.detach().cpu().numpy(),
-                    batch_loss_g2l.detach().cpu().numpy(),
+                    batch_loss.detach().cpu().numpy(),
                 ]
             # update the learning rate
             scheduler.step()
             losses /= idx + 1
             writer.add_scalars(
                 "Loss", {"batch loss": losses[0], "global2local loss": losses[1]}, epoch
-            )  # ,'global loss':losses[1],'local loss':losses[2] }, epoch)
-            # writer.add_scalars('similarity',  {'pos_g2g':pos_g2g,'pos_l2l':pos_l2l,'pos_g2l':pos_g2l ,'neg_g2g':neg_g2g,'neg_l2l':neg_l2l,'neg_g2l':neg_g2l }, epoch)
+            )
+            writer.add_scalars("similarity", {"pos": pos, "neg": neg}, epoch)
             writer.add_scalars(
-                "similarity", {"pos_g2l": pos_g2l, "neg_g2l": neg_g2l}, epoch
+                "vicreg_loss",
+                {"dist_loss": dist_loss, "var_loss": var_loss, "cov_loss": cov_loss},
+                epoch,
             )
 
-            # print('pos_g2g',pos_g2g,'pos_l2l',pos_l2l,'pos_g2l',pos_g2l)
-            # print('neg_g2g',neg_g2g,'neg_l2l',neg_l2l,'neg_g2l',neg_g2l)
-            print("pos_g2l", pos_g2l)
-            print("neg_g2l", neg_g2l)
+            print("pos_g2l", pos)
+            print("neg_g2l", neg)
 
             if epoch % save_freq == 0:
                 torch.save(
@@ -254,7 +250,6 @@ def main():
                         "epoch": epoch,
                         "model_state_dict": model.state_dict(),
                         "optimizer_state_dict": optimizer.state_dict(),
-                        # 'loss': loss
                     },
                     out_dir + "/model/checkpoint/%08d_model.pth" % (epoch),
                 )
@@ -263,13 +258,11 @@ def main():
             if epoch > start_saving:
                 if min_trainLoss > losses[0]:
                     min_trainLoss = losses[0]
-                    # torch.save(model.state_dict(), out_dir + '/checkpoint/max_valid_model.pth')
                     torch.save(
                         {
                             "epoch": epoch,
                             "model_state_dict": model.state_dict(),
                             "optimizer_state_dict": optimizer.state_dict(),
-                            # 'loss': loss
                         },
                         os.path.join(out_dir, "model/" + "max_valid_model.pth"),
                     )

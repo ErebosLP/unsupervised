@@ -8,10 +8,10 @@ path:
     root_img_val_jean : '../dataset/'
 
 hyperparameter:
-    numEpochs : 100
+    numEpochs : 200
     learningRate : 0.001
     numImgs : 1000
-    neg_examples : 256
+    neg_examples : 180
     p_flip : 0
     weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize : 1
@@ -23,7 +23,7 @@ hyperparameter:
 model:
     encoder : 'resnet50'
     numClasses : 16
-    model_name : '_vicreg_2507' 
+    model_name : '_vicreg_0108' 
     
 loss:
     loss_name: "vicreg"

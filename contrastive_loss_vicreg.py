@@ -41,28 +41,44 @@ class ContrastiveLoss(torch.nn.Module):
             z_view2_vec = (
                 torch.reshape(z_view2, [batch, c, h * w]).squeeze(0).unsqueeze(2)
             )
+
+            idx = np.zeros(z_view1_vec.shape[1], bool)
+            idx[: self.examples] = 1
+            idx = np.random.permutation(idx)
+
+            z_view1_vec = z_view1_vec[:, idx, :]
+            z_view2_vec = z_view2_vec[:, idx, :]
+
             # variance
 
             std_z_view1 = torch.sqrt(z_view1_vec.var(dim=0) + 1e-04)
             std_z_view2 = torch.sqrt(z_view2_vec.var(dim=0) + 1e-04)
-            std_loss = torch.mean(torch.relu(1 - std_z_view1)) + torch.mean(
+            var_loss = torch.mean(torch.relu(1 - std_z_view1)) + torch.mean(
                 torch.relu(1 - std_z_view2)
             )
+            # invariance
+            dist_loss = (torch.norm(z_view1_vec - z_view2_vec, dim=0) ** 2).mean()
 
             # Covariance matrix
-            z_view1_vec = (z_view1_vec.squeeze(2).T - z_view1_vec.mean(dim=0)).T
-            z_view2_vec = (z_view2_vec.squeeze(2).T - z_view2_vec.mean(dim=0)).T
-            cov_z_a = (z_view1_vec @ z_view1_vec.T) / (z_view1_vec.shape[0] - 1)
-            cov_z_b = (z_view2_vec @ z_view2_vec.T) / (z_view2_vec.shape[0] - 1)
+            z_view1_vec = z_view1_vec.squeeze(2) - z_view1_vec.mean(dim=1)
+            z_view2_vec = z_view2_vec.squeeze(2) - z_view2_vec.mean(dim=1)
+            cov_z_a = (z_view1_vec.T @ z_view1_vec) / (z_view1_vec.shape[1] - 1)
+            cov_z_b = (z_view2_vec.T @ z_view2_vec) / (z_view2_vec.shape[1] - 1)
             cov_z_a[range(cov_z_a.shape[0]), range(cov_z_a.shape[0])] = 0
             cov_z_b[range(cov_z_b.shape[0]), range(cov_z_b.shape[0])] = 0
+
             cov_loss = (
-                cov_z_a.pow_(2).sum() / z_view1_vec.shape[1]
-                + cov_z_b.pow_(2).sum() / z_view2_vec.shape[1]
+                cov_z_a.pow(2).sum() / z_view1_vec.shape[0]
+                + cov_z_b.pow(2).sum() / z_view2_vec.shape[0]
             )
 
-            # invariance
-            s_z = (torch.norm(z_view1_vec - z_view2_vec) ** 2).mean()
-            loss += self.lamda * s_z + self.mu * std_loss + self.nu * cov_loss
+            loss += self.lamda * dist_loss + self.mu * var_loss + self.nu * cov_loss
 
-        return loss / (i + 1), pos_corr / (i + 1), neg_corr / (i + 1)
+        return (
+            loss / (i + 1),
+            pos_corr / (i + 1),
+            neg_corr / (i + 1),
+            dist_loss / (i + 1),
+            var_loss / (i + 1),
+            cov_loss / (i + 1),
+        )
