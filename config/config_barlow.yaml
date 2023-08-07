@@ -10,20 +10,20 @@ path:
 hyperparameter:
     numEpochs : 200
     learningRate : 0.001
-    numImgs : 1000
+    numImgs : 10000
     neg_examples : 150
     p_flip : 0
     weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize : 1
     acc_batchsize : 8
-    factor_pos : [1.5,2,2.5,3,3.5,4,4.5,5] # only for Barlowloss
+    factor_pos : [2,2.5,3,3.5] # only for Barlowloss
     p_crop : 0
     crop_size : 128
 
 model:
     encoder : 'resnet50'
     numClasses : 16
-    model_name : '_barlow_0108' 
+    model_name : '_barlow_0708' 
     
 loss:
     loss_name: "barlow"

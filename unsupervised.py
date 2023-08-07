@@ -89,6 +89,8 @@ def main():
             + str(numEpochs)
             + "_examples_"
             + str(neg_examples)
+            + "_factor_pos_"
+            + str(factor_pos)
             + cfg["model"]["model_name"]
         )
 
