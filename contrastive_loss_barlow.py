@@ -48,7 +48,7 @@ class ContrastiveLoss(torch.nn.Module):
 
             mat[range(mat.shape[0]), range(mat.shape[0])] -= 1
             mat[range(mat.shape[0]), range(mat.shape[0])] *= self.factor_pos
-            loss += (mat).pow(2).sum() / (mat.shape[0] ** 2)
+            loss += (mat).pow(2).sum() / (mat.shape[0] ** 2) * 100
 
             pos_corr += (torch.diagonal(mat).sum() / self.factor_pos / mat.shape[0]) + 1
             neg_corr += (mat.sum() - (pos_corr * mat.shape[0])) / (

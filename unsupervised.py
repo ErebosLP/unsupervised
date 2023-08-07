@@ -173,46 +173,13 @@ def main():
             )
             header = "Epoch: [{}]".format(epoch)
             print("start train epoch: " + str(epoch))
-            losses = np.array([0.0, 0.0])
+            losses = 0.0
             for idx, (view_1, view_2, img) in enumerate(
                 metric_logger.log_every(train_loader, print_freq, header)
             ):
-                flipped = False
-                if torch.rand(1) < p_flip:
-                    view_1 = transforms.RandomHorizontalFlip(1)(view_1)
-                    flipped = True
+                q, k = model(im_q=view_1.cuda(), im_k=view_2.cuda())
 
-                view_1 = view_1.cuda()
-                view_2 = view_2.cuda()
-                croped = False
-                if torch.rand(1) < p_crop:
-                    view_1, crop_pos = randomCrop(view_1, crop_size)
-                    croped = True
-
-                q, k = model(im_q=view_1, im_k=view_2)
-                if croped:
-                    k = CropAtPos(k, crop_pos, crop_size)
-
-                view_1_jig, view_1_perm = aug._jigsaw(view_1)
-                view_2_jig, view_2_perm = aug._jigsaw(view_2)
-
-                q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
-
-                q_jig = aug._jigsaw_backwards(q_jig, view_1_perm)
-                k_jig = aug._jigsaw_backwards(k_jig, view_2_perm)
-
-                if croped:
-                    k_jig = CropAtPos(k_jig, crop_pos, crop_size)
-
-                if flipped:
-                    q = transforms.RandomHorizontalFlip(1)(q)
-                    q_jig = transforms.RandomHorizontalFlip(1)(q_jig)
-
-                batch_loss, pos, neg, dist_loss, var_loss, cov_loss = loss(
-                    q_jig, k, img
-                )
-
-                batch_loss = batch_loss
+                batch_loss, pos, neg, dist_loss, var_loss, cov_loss = loss(q, k, img)
                 batch_loss.backward()
 
                 if ((idx + 1) % acc_batchsize == 0) or (idx + 1 == len(train_loader)):
@@ -222,16 +189,11 @@ def main():
                 metric_logger.update(loss=batch_loss)
                 metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
-                losses += [
-                    batch_loss.detach().cpu().numpy(),
-                    batch_loss.detach().cpu().numpy(),
-                ]
+                losses += batch_loss.detach().cpu().numpy()
             # update the learning rate
             scheduler.step()
             losses /= idx + 1
-            writer.add_scalars(
-                "Loss", {"batch loss": losses[0], "global2local loss": losses[1]}, epoch
-            )
+            writer.add_scalar("Loss", losses, epoch)
             writer.add_scalars("similarity", {"pos": pos, "neg": neg}, epoch)
             writer.add_scalars(
                 "vicreg_loss",
@@ -256,10 +218,10 @@ def main():
                     out_dir + "/model/checkpoint/%08d_model.pth" % (epoch),
                 )
 
-            print("losses & min_trainLoss", losses[0], "/", min_trainLoss)
+            print("losses & min_trainLoss", losses, "/", min_trainLoss)
             if epoch > start_saving:
-                if min_trainLoss > losses[0]:
-                    min_trainLoss = losses[0]
+                if min_trainLoss > losses:
+                    min_trainLoss = losses
                     torch.save(
                         {
                             "epoch": epoch,
