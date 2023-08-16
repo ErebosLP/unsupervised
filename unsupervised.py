@@ -131,12 +131,12 @@ def main():
             City_imageloader.TwoCropsTransform(transforms.Compose(augmentation)),
             num_imgs=numImgs,
         )
-        Citydataset_validation = City_dataloader.CityscapeDataset(
-            root_img_val,
-            root_img_val,
-            "val",
-            City_dataloader.TwoCropsTransform(transforms.Compose(augmentation)),
-        )
+        # Citydataset_validation = City_dataloader.CityscapeDataset(
+        #     root_img_val,
+        #     root_img_val,
+        #     "val",
+        #     City_dataloader.TwoCropsTransform(transforms.Compose(augmentation)),
+        # )
         numImgs = Citydataset.__len__()
 
         model.to("cuda")
@@ -148,21 +148,21 @@ def main():
             pin_memory=True,
             drop_last=False,
         )
-        val_loader = torch.utils.data.DataLoader(
-            Citydataset_validation,
-            batch_size=1,
-            shuffle=False,
-            num_workers=1,
-            pin_memory=True,
-            drop_last=False,
-        )
+        # val_loader = torch.utils.data.DataLoader(
+        #     Citydataset_validation,
+        #     batch_size=1,
+        #     shuffle=False,
+        #     num_workers=1,
+        #     pin_memory=True,
+        #     drop_last=False,
+        # )
 
         params = [p for p in model.parameters() if p.requires_grad]
         optimizer = torch.optim.Adam(params, lr=learningRate, weight_decay=0.0005)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, numEpochs)
 
         loss = contrastive_loss.ContrastiveLoss(factor_pos, weight_factor, neg_examples)
-        val_loss = instance_loss.InstanceLoss()
+        # val_loss = instance_loss.InstanceLoss()
         t1 = time.time()
         for epoch in range(numEpochs):
             torch.cuda.empty_cache()

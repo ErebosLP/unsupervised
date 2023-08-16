@@ -1,5 +1,5 @@
 path:
-    img_path : '/cache/jhembach/dataset/'
+    img_path : '/automount_home_students/jhembach/dataset/' #'/cache/jhembach/dataset/'
     out_dir : '/cache/jhembach/results/barlow_loss/'
     root_img_val : '/cache/jhembach/Cityscapes_val/'
 
@@ -16,20 +16,20 @@ hyperparameter:
     weight_factor : .9 # euc_dist *factor + rgb_dist * (1-factor)
     batchsize : 1
     acc_batchsize : 8
-    factor_pos : [2,2.5,3,3.5] # only for Barlowloss
+    factor_pos : [2] # only for Barlowloss
     p_crop : 0
     crop_size : 128
 
 model:
     encoder : 'resnet50'
     numClasses : 16
-    model_name : '_barlow_0708' 
+    model_name : '_barlow_1608' 
     
 loss:
     loss_name: "barlow"
 
 print:
-    print_freq : 100
+    print_freq : 1000
     print_freq_val : 500
     save_freq : 25
     start_saving : 0 #when to start saving the max_valid_model
