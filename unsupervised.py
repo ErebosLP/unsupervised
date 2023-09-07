@@ -178,7 +178,7 @@ def main():
                 metric_logger.log_every(train_loader, print_freq, header)
             ):
                 view_1_jig, view_1_perm = aug._jigsaw(view_1.cuda())
-                view_2_jig, view_2_perm = aug._jigsaw(view_2.cuda())
+                # view_2_jig, view_2_perm = aug._jigsaw(view_2.cuda())
 
                 # q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
                 q_jig, k = model(im_q=view_1_jig, im_k=view_2.cuda())
