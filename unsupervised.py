@@ -177,9 +177,18 @@ def main():
             for idx, (view_1, view_2, img) in enumerate(
                 metric_logger.log_every(train_loader, print_freq, header)
             ):
-                q, k = model(im_q=view_1.cuda(), im_k=view_2.cuda())
+                view_1_jig, view_1_perm = aug._jigsaw(view_1.cuda())
+                view_2_jig, view_2_perm = aug._jigsaw(view_2.cuda())
 
-                batch_loss, pos, neg, dist_loss, var_loss, cov_loss = loss(q, k, img)
+                # q_jig, k_jig = model(im_q=view_1_jig, im_k=view_2_jig)
+                q_jig, k = model(im_q=view_1_jig, im_k=view_2.cuda())
+
+                q_jig = aug._jigsaw_backwards(q_jig, view_1_perm)
+                # k_jig = aug._jigsaw_backwards(k_jig, view_2_perm)
+
+                batch_loss, pos, neg, dist_loss, var_loss, cov_loss = loss(
+                    q_jig, k, img
+                )
                 batch_loss.backward()
 
                 if ((idx + 1) % acc_batchsize == 0) or (idx + 1 == len(train_loader)):
